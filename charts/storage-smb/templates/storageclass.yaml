@@ -19,5 +19,9 @@ mountOptions:
   - file_mode={{ .Values.mount.file_mode | default "0777" }}
   - uid={{ .Values.mount.uid | default "1001" }}
   - gid={{ .Values.mount.gid | default "1001" }}
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino  # required to prevent data corruption
 {{- end }}
 
