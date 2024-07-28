@@ -1,0 +1,23 @@
+{{- if .Values.create.storageclass }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.storageclass.name }} 
+provisioner: smb.csi.k8s.io
+parameters:
+  source: {{ if .Values.smb.source }}{{ .Values.smb.source }}{{ else }}//{{ .Values.smb.host }}/{{ .Values.smb.share }}{{ end }}
+  # if csi.storage.k8s.io/provisioner-secret is provided, will create a sub directory
+  # with PV name under source
+  #csi.storage.k8s.io/provisioner-secret-name: smb-creds
+  #csi.storage.k8s.io/provisioner-secret-namespace: smb-test
+  csi.storage.k8s.io/node-stage-secret-name: {{ .Values.smb.secret.name }}
+  csi.storage.k8s.io/node-stage-secret-namespace: {{ .Values.smb.secret.namespace }}
+reclaimPolicy: Delete  # available values: Delete, Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - dir_mode={{ .Values.mount.dir_mode | default "0777" }}
+  - file_mode={{ .Values.mount.file_mode | default "0777" }}
+  - uid={{ .Values.mount.uid | default "1001" }}
+  - gid={{ .Values.mount.gid | default "1001" }}
+{{- end }}
+

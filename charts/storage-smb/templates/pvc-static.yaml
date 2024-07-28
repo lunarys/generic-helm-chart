@@ -1,0 +1,24 @@
+{{- if .Values.create.pvc }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.pvc.name | default "pvc-smb" | quote }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  {{- if .Values.mount.capacity }}
+  resources:
+    requests:
+      storage: {{ .Values.mount.capacity }}
+  {{- end }}
+  {{- if .Values.create.pv }}
+  volumeName: {{ .Values.pv.name | default "pv-smb" | quote }}
+  {{- end }}
+  {{- if .Values.pvc.static }}
+  # empty to disable dynamic provisioning via storageclass
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.storageclass.name | required ".Values.storageclass.name is undefined..." | quote }}
+  {{- end }}
+{{ end }}
+

@@ -1,0 +1,39 @@
+{{- if .Values.create.pv }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.pv.name | default "pv-smb" | quote }}
+  {{- if .Values.pv.static }}
+  annotations:
+    pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
+  {{- end }}
+spec:
+  {{- if .Values.smb.capacity }}
+  capacity:
+    storage: 10Gi
+  {{- end }}
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete  # available values: Delete, Retain
+  # empty to disable dynamic provisioning via storageclass
+  storageClassName: ""
+  {{- if .Values.create.pvc }}
+  claimRef:
+    name: {{ .Values.pvc.name | default "pvc-smb" | quote }}
+    namespace: {{ .Release.Namespace | quote }}
+  {{- end }}
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+  csi:
+    driver: smb.csi.k8s.io
+    # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
+    # make sure this value is unique for every share in the cluster
+    volumeHandle: "{{ if .Values.smb.source }}{{ .Values.smb.source | trimPrefix "//" }}{{ else }}{{ .Values.smb.host }}/{{ .Values.smb.share }}{{ end }}##"
+    volumeAttributes:
+      source: "{{ if .Values.smb.source }}{{ .Values.smb.source }}{{ else }}//{{ .Values.smb.host }}/{{ .Values.smb.share }}{{ end }}"
+    nodeStageSecretRef:
+      name: "{{ .Values.smb.secret.name | default "smb-creds" }}"
+      namespace: "{{ .Values.smb.secret.namespace | default .Release.Namespace }}"
+{{- end }}
+

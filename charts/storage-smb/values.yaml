@@ -1,0 +1,52 @@
+# variants:
+#   - storageclass: storageclass + pvc (static: false)
+#   - pv: pv + pvc (static: true)
+#   - pvc with existing (external) pv? -> maybe storageclass is better?
+#   - pvc with existing (external) storageclass
+#   - ephemeral? https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes
+
+# TODO: capacity is required
+
+create:
+  deployment: true
+  secret: false
+  storageclass: false
+  pv: true
+  pvc: true
+
+smb:
+  # either
+  host: "erolas.elda"
+  share: "test"
+  # or
+  #source: "//erolas.elda/test"
+  # available capacity
+  capacity: "10Gi"
+  secret:
+    # either
+    name: "smb-creds"
+    namespace: "smb-test"
+    # or 
+    user:
+    password:
+    domain: "WORKGROUP"
+
+mount:
+  dir_mode: ""
+  file_mode: ""
+  uid: ""
+  gid: ""
+  subPath: "subdir"
+  readonly: false
+  # requested capacity
+  capacity: "10Gi"
+
+pv:
+  name: ""
+
+pvc:
+  name: ""
+  static: true
+
+storageclass:
+  name: smb-test-sc
