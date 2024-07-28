@@ -11,14 +11,20 @@ spec:
     requests:
       storage: {{ .Values.mount.capacity }}
   {{- end }}
-  {{- if .Values.create.pv }}
+  {{- if .Values.variant.pv }}
+    {{- if and (not .Values.create.pv) (not .Values.pv.name) }}
+      {{- fail "pv.name for external pv is not set" }}
+    {{- end }}
   volumeName: {{ .Values.pv.name | default "pv-smb" | quote }}
-  {{- end }}
-  {{- if .Values.pvc.static }}
   # empty to disable dynamic provisioning via storageclass
   storageClassName: ""
+  {{- else if .Values.variant.storageclass }}
+    {{- if and (not .Values.create.storageclass) (not .Values.storageclass.name) }}
+      {{- fail "storageclass.name for external StorageClass is not set" }}
+    {{- end }}
+  storageClassName: {{ .Values.storageclass.name | default (printf "%s-storageclass-%s" .Release.Name .Values.smb.share) | quote }}
   {{- else }}
-  storageClassName: {{ .Values.storageclass.name | required ".Values.storageclass.name is undefined..." | quote }}
+    {{- fail "Variant is neither pv nor storageclass" }}
   {{- end }}
 {{ end }}
 

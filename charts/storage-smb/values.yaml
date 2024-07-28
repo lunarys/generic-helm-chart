@@ -7,10 +7,14 @@
 
 # TODO: capacity is required
 
+variant:
+  storageclass: ""
+  pv: ""
+
 create:
-  deployment: true
+  deployment: false
   secret: false
-  storageclass: false
+  storageclass: true
   pv: true
   pvc: true
 
@@ -36,7 +40,7 @@ mount:
   file_mode: ""
   uid: ""
   gid: ""
-  subPath: "subdir"
+  subPath: ""
   readonly: false
   # requested capacity
   capacity: "10Gi"
@@ -46,7 +50,6 @@ pv:
 
 pvc:
   name: ""
-  static: true
 
 storageclass:
-  name: smb-test-sc
+  name: ""

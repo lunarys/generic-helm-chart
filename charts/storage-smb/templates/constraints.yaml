@@ -1,0 +1,8 @@
+{{- if .Values.variant }}
+  {{- if not (values .Values.variant | compact | has true) }}
+    {{ fail "No variant selected" }}
+  {{- end }}
+{{- else }}
+  {{- fail "Variant is unset" }}
+{{- end }}
+

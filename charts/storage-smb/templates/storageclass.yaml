@@ -1,11 +1,11 @@
-{{- if .Values.create.storageclass }}
+{{- if and .Values.create.storageclass .Values.variant.storageclass }}
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: {{ .Values.storageclass.name }} 
+  name: {{ .Values.storageclass.name | default (printf "%s-storageclass-%s" .Release.Name .Values.smb.share) | quote }}
 provisioner: smb.csi.k8s.io
 parameters:
-  source: {{ if .Values.smb.source }}{{ .Values.smb.source }}{{ else }}//{{ .Values.smb.host }}/{{ .Values.smb.share }}{{ end }}
+  source: "//{{ .Values.smb.host }}/{{ .Values.smb.share }}"
   # if csi.storage.k8s.io/provisioner-secret is provided, will create a sub directory
   # with PV name under source
   #csi.storage.k8s.io/provisioner-secret-name: smb-creds

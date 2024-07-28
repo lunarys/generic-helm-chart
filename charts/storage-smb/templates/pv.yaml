@@ -1,4 +1,4 @@
-{{- if .Values.create.pv }}
+{{- if and .Values.create.pv .Values.variant.pv }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -35,9 +35,9 @@ spec:
     driver: smb.csi.k8s.io
     # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
     # make sure this value is unique for every share in the cluster
-    volumeHandle: "{{ if .Values.smb.source }}{{ .Values.smb.source | trimPrefix "//" }}{{ else }}{{ .Values.smb.host }}/{{ .Values.smb.share }}{{ end }}##"
+    volumeHandle: "{{ .Values.smb.host }}/{{ .Values.smb.share }}##"
     volumeAttributes:
-      source: "{{ if .Values.smb.source }}{{ .Values.smb.source }}{{ else }}//{{ .Values.smb.host }}/{{ .Values.smb.share }}{{ end }}"
+      source: "//{{ .Values.smb.host }}/{{ .Values.smb.share }}"
     nodeStageSecretRef:
       name: "{{ .Values.smb.secret.name | default "smb-creds" }}"
       namespace: "{{ .Values.smb.secret.namespace | default .Release.Namespace }}"
