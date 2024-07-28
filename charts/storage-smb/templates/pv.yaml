@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Values.pv.name | default "pv-smb" | quote }}
+  name: {{ .Values.pv.name | default (printf "%s-pv-smb-%s" .Release.Name .Chart.Name) | quote }}
   {{- if .Values.pv.static }}
   annotations:
     pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
@@ -19,7 +19,7 @@ spec:
   storageClassName: ""
   {{- if .Values.create.pvc }}
   claimRef:
-    name: {{ .Values.pvc.name | default "pvc-smb" | quote }}
+    name: {{ .Values.pvc.name | default (printf "%s-pvc-smb-%s" .Release.Name .Chart.Name) | quote }}
     namespace: {{ .Release.Namespace | quote }}
   {{- end }}
   mountOptions:

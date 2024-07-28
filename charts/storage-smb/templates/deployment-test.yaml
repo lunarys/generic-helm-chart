@@ -35,7 +35,7 @@ spec:
       volumes:
         - name: smb
           persistentVolumeClaim:
-            claimName: pvc-smb
+            claimName: {{ .Values.pvc.name | default (printf "%s-pvc-smb-%s" .Release.Name .Chart.Name) | quote }}
   strategy:
     rollingUpdate:
       maxSurge: 0
