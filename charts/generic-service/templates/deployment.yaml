@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+  {{- include "ju-common.labels" . | nindent 4 }}
+  name: {{ include "ju-common.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "ju-common.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- include "ju-common.annotations" . | nindent 8 }}
+        {{- if .Values.prometheus.enabled }}
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: 'todo'
+        prometheus.io/port: 'todo'
+        {{- else }}
+        prometheus.io/scrape: 'false'
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ju-common.podLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if include "ju-backend.isCustomizedServiceAccount" . }}
+      serviceAccountName: {{ include "ju-backend.serviceAccountName" . | quote }}
+      {{- end }}
+      containers:
+        - name: {{ include "ju-common.fullname" . }}
+          image: {{ include "ju-common.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          #readiness & liveness
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /{{  trimAll "/" (tpl .Values.livenessProbe.path .) }}
+              port: {{ tpl .Values.livenessProbe.port . }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /{{  trimAll "/" (tpl .Values.readinessProbe.path .) }}
+              port: {{ tpl .Values.readinessProbe.port . }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
+          #config values that comes from the configmap 
+          envFrom:
+            {{- range .Values.extraConfig.secrets }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+            {{- range .Values.extraConfig.configmaps }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+          {{- if .Values.extraConfig.env }}
+          env:
+            {{- if .Values.extraConfig.env }}
+              {{- .Values.extraConfig.env | toYaml | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          #external mounted Spring Boot Properties
+          {{- if .Values.extraConfig.volumeMounts }}
+          volumeMounts:
+            {{- range .Values.extraConfig.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              readOnly: {{ .readOnly | default false }}
+            {{- end }}
+          {{- end }}
+      {{- if .Values.extraConfig.volumeMounts }}
+      volumes:
+        {{- range .Values.extraConfig.volumeMounts }}
+        - name: {{ .name }}
+          {{- if not (or .configMap .secretName .nfs) }}
+            {{- fail "Neither secretName nor configMap nor nfs is defined as volume " -}}
+          {{- end }}        
+          {{- if or .configMap .secretName }} 
+          {{- if .secretName }}
+          secret:
+            secretName: {{ .secretName }}
+          {{- else if .configMap }}
+          configMap:
+            name: {{ .configMap }}
+          {{- end }}
+            items:
+              {{- range $v := .items }}
+              - key: {{ $v.key }}
+                path: {{ $v.path }}
+              {{- end }}
+          {{- end }}
+          {{- if .nfs }}
+          nfs:
+            server: {{ .nfs.server }}
+            path: {{ .nfs.path }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

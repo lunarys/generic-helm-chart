@@ -1,0 +1,38 @@
+{{ if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ju-common.fullname" . }}
+  annotations:
+    {{- with .Values.ingress.annotations -}}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "ju-common.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.ingress.ingressClass }}
+  ingressClassName: {{ .Values.ingress.ingressClass }}
+  {{- end }}
+  rules:
+    - host: {{ include "ju-common.ingressHost" . }}
+      http:
+        paths:
+          - path: {{ include "ju-common.ingressPath" . | quote }}
+            pathType: "Prefix"
+            backend:
+              service:
+                name: {{ include "ju-common.serviceName" . }}
+                port:
+                  number: {{ .Values.service.port }}
+          {{- if .Values.ingress.additionalPaths }}
+            {{- range .Values.ingress.additionalPaths }}
+          - path: /{{ trimAll "/" (tpl .path $) }}
+            pathType: {{ tpl (.pathType | default "Prefix") $ }}
+            backend:
+              service:
+                name: {{ tpl .backend.service.name $ }}
+                port:
+                  number: {{ tpl .backend.service.port.number $ }}
+            {{- end }}
+          {{- end }}
+{{ end }}

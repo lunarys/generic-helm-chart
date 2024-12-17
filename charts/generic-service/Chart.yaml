@@ -1,0 +1,5 @@
+apiVersion: v2
+description: Generic helm Chart for service deployments
+name: generic-service
+type: application
+version: 0.0.1

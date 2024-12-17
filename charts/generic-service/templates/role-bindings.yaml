@@ -1,0 +1,18 @@
+{{- if .Values.serviceAccount.roleBindings }}
+{{- range .Values.serviceAccount.roleBindings }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "ju-common.fullname" $ }}-{{ trimPrefix (printf "%s-" (include "ju-common.fullname" $)) .name }}-binding
+  namespace: {{ $.Release.Namespace }}  # where the role is granted
+roleRef:
+  apiGroup: ""
+  kind: {{ .kind | default "Role" }}
+  name: {{ required "Missing name for RoleBinding" .name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ju-backend.serviceAccountName" $ }}
+    namespace: {{ $.Release.Namespace }}  # where the service account lives
+{{- end }}
+{{- end }}
