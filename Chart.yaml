@@ -3,3 +3,5 @@ description: Generic helm Chart for service deployments
 name: generic-service
 type: application
 version: 0.0.1
+dependencies:
+  - name: storage-smb
