@@ -5,3 +5,4 @@ type: application
 version: 0.0.1
 dependencies:
   - name: storage-smb
+    version: 0.1.0  # must match the version in the subchart...
