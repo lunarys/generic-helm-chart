@@ -1,0 +1,2 @@
+include:
+  - component: $CI_SERVER_FQDN/to-be-continuous/helm/gitlab-ci-helm@8.0.1
