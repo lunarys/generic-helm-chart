@@ -1,4 +1,4 @@
-{{- if and .Values.create.pv .Values.variant.pv }}
+{{- if and .Values.enabled .Values.create.pv .Values.variant.pv }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:

@@ -1,3 +1,7 @@
+# -- child charts
+storage-smb:
+  enabled: false
+
 # -- image pull secret for pulling docker images into a kubernetes cluster. Not needed in our aeb clusters. Only needed for local development.
 imagePullSecrets: []
 
