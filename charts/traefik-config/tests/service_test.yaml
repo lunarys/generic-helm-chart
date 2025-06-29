@@ -1,0 +1,47 @@
+suite: Service values rendering
+
+templates:
+  - templates/ingress.yaml
+
+tests:
+  - it: should use service.name and service.port from values
+    set:
+      ingress.enabled: true
+      service.name: "my-backend"
+      service.port: 8080
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: my-backend
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080
+
+  - it: should use tpl for service.name and service.port
+    set:
+      ingress.enabled: true
+      service.name: "{{ printf \"my-%s\" \"backend\" }}"
+      service.port: "{{ 8080 }}"
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: my-backend
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080
+
+  - it: should use default service.name if not set (should fail rendering)
+    set:
+      ingress.enabled: true
+      service.port: 8080
+    asserts:
+      - failedTemplate:
+          errorMessage: "service.name is required"
+
+  - it: should use default service.port if not set (should fail rendering)
+    set:
+      ingress.enabled: true
+      service.name: "my-backend"
+    asserts:
+      - failedTemplate:
+          errorMessage: "service.port is required"

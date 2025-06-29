@@ -4,7 +4,6 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  # TODO: general fullname helper?
   name: {{ default .Chart.Name .Values.nameOverride }}
   annotations:
     {{- include "ju.ingress.middlewares" . | nindent 4 }}
@@ -21,22 +20,22 @@ spec:
         paths:
           - backend:
               service:
-                name: hello-world 
+                name: {{ tpl .Values.service.name . }}
                 port:
-                  number: 80
-            path: /
-            pathType: Prefix
+                  number: {{ tpl (toString .Values.service.port) . | int }}
+            path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
     {{- if and .Values.ingress.accessControl.externalAccessAllowed (ne (include "ju.ingress.externalHost" .) (include "ju.ingress.internalHost" .)) }}
     - host: {{ include "ju.ingress.externalHost" . }}
       http:
         paths:
           - backend:
               service:
-                name: hello-world 
+                name: {{ tpl .Values.service.name . }}
                 port:
-                  number: 80
-            path: /
-            pathType: Prefix
+                  number: {{ tpl (toString .Values.service.port) . | int }}
+            path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
     {{- end }}
 {{-   end }}
 {{- end }}

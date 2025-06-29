@@ -3,6 +3,11 @@ suite: Ingress rendering
 templates:
   - templates/ingress.yaml
 
+set:
+  service:
+    name: "my-backend"
+    port: 8080
+
 tests:
   - it: should render ingress when enabled
     set:
@@ -109,3 +114,27 @@ tests:
     asserts:
       - notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: should use ingress.path and ingress.pathType from values
+    set:
+      ingress.enabled: true
+      ingress.path: /custom
+      ingress.pathType: Exact
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /custom
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Exact
+
+  - it: should use default ingress.path and ingress.pathType if not set
+    set:
+      ingress.enabled: true
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
