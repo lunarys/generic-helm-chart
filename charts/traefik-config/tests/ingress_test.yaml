@@ -1,0 +1,111 @@
+suite: Ingress rendering
+
+templates:
+  - templates/ingress.yaml
+
+tests:
+  - it: should render ingress when enabled
+    set:
+      ingress.enabled: true
+      ingress.host: "test.local"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: custom-ingress
+
+  - it: should set ingressClassName if provided
+    set:
+      ingress.enabled: true
+      ingress.className: "traefik"
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: traefik
+
+  - it: should not render ingress when disabled
+    set:
+      ingress.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render internal host rule
+    set:
+      ingress.enabled: true
+      ingress.host: "internal.example.com"
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: internal.example.com
+
+  - it: should render external host rule when externalAccessAllowed is true and hosts differ
+    set:
+      ingress.enabled: true
+      ingress.accessControl.externalAccessAllowed: true
+      ingress.accessControl.externalHost: "external.example.com"
+      ingress.accessControl.internalHost: "internal.example.com"
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: internal.example.com
+      - equal:
+          path: spec.rules[1].host
+          value: external.example.com
+
+  - it: should add custom annotations
+    set:
+      ingress.enabled: true
+      ingress.annotations.foo: bar
+    asserts:
+      - equal:
+          path: metadata.annotations.foo
+          value: bar
+
+  - it: should set internalAccessAllowListName middleware when external access is not allowed
+    set:
+      ingress.enabled: true
+      ingress.accessControl.externalAccessAllowed: false
+      ingress.accessControl.internalAccessAllowListName: "my-internal-allowlist"
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: my-internal-allowlist
+
+  - it: should set both ipAllowList and internalAccessAllowListName middlewares when both are enabled
+    set:
+      ingress.enabled: true
+      ingress.middleware.enabled: true
+      ingress.middleware.name: "custom-middleware"
+      ingress.middleware.ipAllowList.sourceRange[0]: "10.0.0.0/22"
+      ingress.accessControl.externalAccessAllowed: false
+      ingress.accessControl.internalAccessAllowListName: "my-internal-allowlist"
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "NAMESPACE-custom-middleware@kubernetescrd,my-internal-allowlist"
+
+  - it: should only set ipAllowList middleware when enabled and external access is allowed
+    set:
+      ingress.enabled: true
+      ingress.middleware.enabled: true
+      ingress.middleware.name: "custom-middleware"
+      ingress.middleware.ipAllowList.sourceRange[0]: "10.0.0.0/22"
+      ingress.accessControl.externalAccessAllowed: true
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "NAMESPACE-custom-middleware@kubernetescrd"
+
+  - it: should not set middlewares annotation if neither middleware nor internalAccessAllowListName is set
+    set:
+      ingress.enabled: true
+      ingress.middleware.enabled: false
+      ingress.accessControl.externalAccessAllowed: true
+      ingress.accessControl.internalAccessAllowListName: ""
+    asserts:
+      - notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]

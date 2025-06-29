@@ -1,17 +1,22 @@
+{{- define "ju.ingress" }}
+{{-   if .Values.ingress.enabled }}
 ---
-{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: simple-ingress
+  # TODO: general fullname helper?
+  name: {{ default .Chart.Name .Values.nameOverride }}
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-test-ipallowlist@kubernetescrd
+    {{- include "ju.ingress.middlewares" . | nindent 4 }}
+    {{- with .Values.ingress.annotations -}}
+    {{-   toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: {{ include "ju.ingress.internalHost" . }}
       http:
         paths:
           - backend:
@@ -21,5 +26,19 @@ spec:
                   number: 80
             path: /
             pathType: Prefix
+    {{- if and .Values.ingress.accessControl.externalAccessAllowed (ne (include "ju.ingress.externalHost" .) (include "ju.ingress.internalHost" .)) }}
+    - host: {{ include "ju.ingress.externalHost" . }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: hello-world 
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+    {{- end }}
+{{-   end }}
 {{- end }}
 
+{{ template "ju.ingress" . }}
