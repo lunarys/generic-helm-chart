@@ -1,0 +1,5 @@
+apiVersion: v2
+name: external-secrets
+description: Helper for external secrets (bitwarden)
+type: application
+version: 0.1.0

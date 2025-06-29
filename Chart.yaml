@@ -6,3 +6,13 @@ version: 0.0.1
 dependencies:
   - name: storage-smb
     version: 0.1.0  # must match the version in the subchart...
+  - name: traefik-config
+    version: 0.1.0
+  - name: external-secrets
+    version: 0.1.0
+  - name: networkpolicy
+    version: 0.1.0
+  - name: storage-cluster
+    version: 0.1.0
+  - name: storage-local
+    version: 0.1.0

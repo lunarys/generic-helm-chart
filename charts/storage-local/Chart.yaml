@@ -1,0 +1,5 @@
+apiVersion: v2
+name: storage-local
+description: Helper for node local storage (local-volume-provisioner)
+type: application
+version: 0.1.0
