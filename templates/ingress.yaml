@@ -1,1 +1,2 @@
+{{/* From traefik-config subchart */}}
 {{ template "ju.ingress" . }}
