@@ -24,3 +24,4 @@
 #gitlab Stuff
 .gitlab-ci.yml
 README.md
+tests

@@ -6,7 +6,7 @@ kind: Ingress
 metadata:
   name: {{ default .Chart.Name .Values.nameOverride }}
   annotations:
-    {{- include "ju.ingress.middlewares" . | nindent 4 }}
+    {{- include "ju.ingress.middlewares" . | indent 4 }}
     {{- with .Values.ingress.annotations -}}
     {{-   toYaml . | nindent 4 }}
     {{- end }}

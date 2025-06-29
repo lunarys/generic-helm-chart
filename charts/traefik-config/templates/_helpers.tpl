@@ -1,6 +1,6 @@
 {{- define "ju.ingress.middlewares" -}}
 {{- $middlewares := list }}
-{{- if and .Values.ingress.middleware.enabled .Values.ingress.middleware.ipAllowList }}
+{{- if and .Values.ingress.middleware .Values.ingress.middleware.enabled .Values.ingress.middleware.ipAllowList }}
   {{- $middlewares = append $middlewares (printf "%s-%s@kubernetescrd" .Release.Namespace .Values.ingress.middleware.name) }}
 {{- end }}
 {{- if not .Values.ingress.accessControl.externalAccessAllowed }}

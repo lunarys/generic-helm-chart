@@ -1,0 +1,24 @@
+suite: Basic Ingress rendering
+
+templates:
+  - charts/traefik-config/templates/ingress.yaml
+  - templates/ingress.yaml
+
+tests:
+  - it: should render an Ingress resource when enabled
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+
+  - it: should not render subchart ingress by default
+    templates:
+      - charts/traefik-config/templates/ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

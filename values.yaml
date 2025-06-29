@@ -81,31 +81,46 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# -- General ingress settings
 ingress:
-  # -- enable or disable your ingress. If you disable it you have no possibility to access your app from outside the cluster.
   enabled: true
-  # -- the path where you want to access your app. 
-  # This value also sets the spring value server.servlet.context-path if ingress.rewrite is set to false
-  path: ""
-  # -- the hostname where your app will be available. If you leave it empty the default value is is composed of global.subdomain + global.clusterUrl.
+  className: ""
+
   host: ""
-  # -- default annotations attached to the ingress
+  path: /
+  pathType: Prefix
+
+  # -- Access control
+  accessControl:
+    # -- Hostname for external access.
+    # @default -- `ingress.host`
+    externalHost: ""
+    # -- Hostname for internal access.
+    # @default -- `ingress.host`
+    internalHost: ""
+    # -- Whether external should be disabled. Applies the `internalAccessAllowListName` to the ingress.
+    externalAccessAllowed: false
+    # -- Internal access allowlist name, deployed separately and centrally.
+    # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
+    internalAccessAllowListName: "settings-traefik-internal-access-allowlist"
+
+  # -- Custom annotations for the ingress
   annotations: {}
-    #nginx.ingress.kubernetes.io/custom-http-errors: '404,415'
-  # -- list of additional paths for ingress host. E.g. for 'api/v1' and 'api/v2' Possibility to use template values
-  additionalPaths: []
-  #- path: '{{ include "ju-common.fullname" . }}'
-  #  pathType: "Prefix"
-  #  backend:
-  #    service:
-  #      name: '{{ include "ju-common.serviceName" . }}'
-  #      port:
-  #        number: '{{ .Values.service.port }}'
+
+
+# -- Mirrored from traefik-config chart
+traefik-config:
+  ingress:
+    enabled: false
+  middleware:
+    enabled: false
+
 
 # -- definition for the deployed kubernetes service
 # @default -- see below
 service:
   type: ClusterIP
+  name: "{{ .Chart.Name }}"
   # -- default port where the ingress routes the traffic to the service
   port: 80
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)

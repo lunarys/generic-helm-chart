@@ -45,4 +45,3 @@ ingress:
 service:
   name: "{{ fail \"service.name is required\" }}"
   port: "{{ fail \"service.port is required\" }}"
-
