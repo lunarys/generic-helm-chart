@@ -1,0 +1,40 @@
+# -- Enable or disable the chart and all resources
+enabled: true
+
+# -- Name of the ExternalSecret resource
+# @default -- `.Release.Name-external-secret`
+name: ""
+
+# -- Name of the generated Kubernetes Secret
+# @default -- `.Values.name`
+targetName: ""
+
+# -- What happens to the Secret when the ExternalSecret is deleted (Delete or Retain)
+deletionPolicy: Delete
+
+# -- Type of the generated Kubernetes Secret
+secretType: Opaque
+
+# -- Default remoteKey for all fields unless overridden. Usually a UUID for Bitwarden items.
+commonRemoteKey: ""
+
+# -- Map of fields to generate from Bitwarden
+fields:
+  example:
+    # -- Enable this field
+    # @default -- `true`, except for this example
+    enabled: false
+    # -- Name of the SecretStore/ClusterSecretStore.
+    # `username` and `password` require `bitwarden-login`.
+    # Additionally, `bitwarden-fields` is used for custom fields,
+    # `bitwarden-notes` for notes, 
+    # and `bitwarden-attachments` for attachments.
+    # @default -- `bitwarden-login`
+    storeRefName: bitwarden-login
+    # -- Kind of the store reference
+    storeRefKind: ClusterSecretStore
+    # -- Override for remoteKey (optional)
+    remoteKey: ""
+    # -- Property to fetch from Bitwarden, e.g. `username`, `password`, `myfieldname`
+    # @default -- name of the map key
+    remoteProperty: password
