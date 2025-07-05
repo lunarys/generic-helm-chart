@@ -1,0 +1,8 @@
+{{- if .Values.enabled }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Values.name | default (printf "%s-cnp" .Release.Name) }}
+spec:
+{{ toYaml .Values.spec | indent 2 }}
+{{- end }}

@@ -1,0 +1,8 @@
+# -- Enable or disable the chart and all resources
+enabled: true
+
+# -- Name of the CiliumNetworkPolicy resource
+name: ""
+
+# -- Policy spec (see Cilium docs for structure)
+spec: {}
