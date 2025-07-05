@@ -7,51 +7,72 @@
 
 # TODO: capacity is required
 
+# -- Enable or disable the chart
 enabled: true
 
 variant:
+  # -- Set to true to use StorageClass + PVC (dynamic provisioning)
   storageclass: ""
+  # -- Set to true to use PV + PVC (static provisioning)
   pv: ""
 
 create:
+  # -- Create a test Deployment for validation
   deployment: false
+  # -- Create the SMB credentials Secret
   secret: false
+  # -- Create a StorageClass (for storageclass variant)
   storageclass: true
+  # -- Create a PersistentVolume (for pv variant)
   pv: true
+  # -- Create a PersistentVolumeClaim
   pvc: true
 
 smb:
-  # either
+  # -- SMB server hostname or IP
   host: "erolas.elda"
+  # -- SMB share name
   share: "test"
-  # or
+  # -- Alternatively, specify the full SMB source URI
   #source: "//erolas.elda/test"
-  # available capacity
+  # -- Total available capacity for the share (e.g., 10Gi)
   capacity: "10Gi"
   secret:
-    # either
+    # -- Name of the Secret containing SMB credentials (if using existing Secret)
     name: "smb-creds"
+    # -- Namespace for the Secret
     namespace: "smb-test"
-    # or 
+    # -- SMB username (if creating Secret)
     user:
+    # -- SMB password (if creating Secret)
     password:
+    # -- SMB domain (optional)
     domain: "WORKGROUP"
 
 mount:
+  # -- Directory mode for mounted volume
   dir_mode: ""
+  # -- File mode for mounted volume
   file_mode: ""
+  # -- UID for mounted volume
   uid: ""
+  # -- GID for mounted volume
   gid: ""
+  # -- SubPath for mounting
   subPath: ""
+  # -- Mount as read-only
   readonly: false
-  # requested capacity
+  # -- Requested capacity for the PVC
   capacity: "10Gi"
 
 pv:
+  # -- Name of the PersistentVolume (if using static provisioning)
   name: ""
 
 pvc:
+  # -- Name of the PersistentVolumeClaim
   name: ""
 
 storageclass:
+  # -- Name of the StorageClass
   name: ""
