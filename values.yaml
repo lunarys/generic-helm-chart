@@ -30,6 +30,10 @@ image:
   tag: ""
   # -- the pull policy for kubernetes
   pullPolicy: "IfNotPresent"
+  # -- override the default command for the container (entrypoint)
+  command: []
+  # -- override the default arguments for the container
+  args: []
 
 
 # -- possibility to override the desired name of the helm manifest. The default Chart name is automaticly added as prefix

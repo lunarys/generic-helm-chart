@@ -1,0 +1,65 @@
+suite: Test command and args settings in deployment
+
+templates:
+  - deployment.yaml
+
+tests:
+  - it: should not set command or args if not set in values (default)
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].command
+      - notExists:
+          path: spec.template.spec.containers[0].args
+
+  - it: should set command if provided
+    set:
+      image:
+        command:
+          - "/bin/sh"
+          - "-c"
+          - "echo Hello"
+        args: []
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - "/bin/sh"
+            - "-c"
+            - "echo Hello"
+      - notExists:
+          path: spec.template.spec.containers[0].args
+
+  - it: should set args if provided
+    set:
+      image:
+        command: []
+        args:
+          - "--debug"
+          - "--spring.profiles.active=dev"
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].command
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - "--debug"
+            - "--spring.profiles.active=dev"
+
+  - it: should set both command and args if both provided
+    set:
+      image:
+        command:
+          - "/start"
+        args:
+          - "--foo"
+          - "--bar"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - "/start"
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - "--foo"
+            - "--bar"

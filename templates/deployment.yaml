@@ -40,6 +40,12 @@ spec:
         - name: {{ include "ju-common.fullname" . }}
           image: {{ include "ju-common.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.image.command }}
+          command: {{- toYaml .Values.image.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.image.args }}
+          args: {{- toYaml .Values.image.args | nindent 12 }}
+          {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
