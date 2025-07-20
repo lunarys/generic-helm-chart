@@ -1,0 +1,17 @@
+defaults:
+  storageClassName: local-path
+  storageClassNameAutoDelete: local-path-auto-delete
+  accessMode: ReadWriteOnce
+
+pvcs:
+  local-path-pvc:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    autoDelete: false
+
+  another-pvc:
+    enabled: true
+    size: 5Gi
+    autoDelete: true
+
