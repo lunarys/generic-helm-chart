@@ -77,7 +77,7 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 # -- define privilege and access control settings for a pod. For more information have a look at the [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-securityContext: {}
+containerSecurityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
