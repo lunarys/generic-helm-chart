@@ -52,6 +52,10 @@ spec:
           {{- end }}
           #readiness & liveness
           {{- if .Values.livenessProbe.enabled }}
+          {{- if .Values.livenessProbe.override }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe.override | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /{{  trimAll "/" (tpl .Values.livenessProbe.path .) }}
@@ -60,7 +64,12 @@ spec:
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           {{- end }}
+          {{- end }}
           {{- if .Values.readinessProbe.enabled }}
+          {{- if .Values.readinessProbe.override }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe.override | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /{{  trimAll "/" (tpl .Values.readinessProbe.path .) }}
@@ -68,6 +77,7 @@ spec:
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
           {{- end }}
           #config values that comes from the configmap 
           envFrom:
