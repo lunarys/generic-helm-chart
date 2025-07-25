@@ -268,3 +268,6 @@ serviceAccount:
   roleBindings: []
    # - name: my-custom-external-role
    #   kind: Role / ClusterRole
+
+networkpolicy:
+  enabled: false
