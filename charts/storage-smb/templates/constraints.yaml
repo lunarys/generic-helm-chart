@@ -1,7 +1,7 @@
 {{- if .Values.enabled }}
 {{- if .Values.variant }}
-  {{- if not (values .Values.variant | compact | has true) }}
-    {{ fail "No variant selected" }}
+  {{- if and (ne .Values.variant "pv") (ne .Values.variant "storageclass") }}
+    {{ fail "No known variant selected: Available are pv, storageclass" }}
   {{- end }}
 {{- else }}
   {{- fail "Variant is unset" }}

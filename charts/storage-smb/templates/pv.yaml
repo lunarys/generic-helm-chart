@@ -1,36 +1,37 @@
-{{- if and .Values.enabled .Values.create.pv .Values.variant.pv }}
+{{- if and .Values.enabled (eq .Values.variant "pv") .Values.pv.enabled }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: {{ .Values.pv.name | default (printf "%s-pv-smb-%s" .Release.Name .Chart.Name) | quote }}
-  {{- if .Values.pv.static }}
   annotations:
     pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
-  {{- end }}
 spec:
   {{- if .Values.smb.capacity }}
   capacity:
-    storage: 10Gi
+    storage: {{ .Values.smb.capacity }}
   {{- end }}
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete  # available values: Delete, Retain
   # empty to disable dynamic provisioning via storageclass
   storageClassName: ""
-  {{- if .Values.create.pvc }}
+  {{- if .Values.pvc.enabled }}
   claimRef:
     name: {{ .Values.pvc.name | default (printf "%s-pvc-smb-%s" .Release.Name .Chart.Name) | quote }}
     namespace: {{ .Release.Namespace | quote }}
   {{- end }}
   mountOptions:
-    - dir_mode={{ .Values.mount.dir_mode | default "0777" }}
-    - file_mode={{ .Values.mount.file_mode | default "0777" }}
-    - uid={{ .Values.mount.uid | default "1001" }}
-    - gid={{ .Values.mount.gid | default "1001" }}
+    - dir_mode={{ .Values.mount.dir_mode }}
+    - file_mode={{ .Values.mount.file_mode }}
+    - uid={{ .Values.mount.uid }}
+    - gid={{ .Values.mount.gid }}
     - noperm
     - mfsymlinks
     - cache=strict
     - noserverino  # required to prevent data corruption
+    {{- range .Values.mount.extraOptions }}
+    - {{ . }}
+    {{- end }}
   csi:
     driver: smb.csi.k8s.io
     # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}

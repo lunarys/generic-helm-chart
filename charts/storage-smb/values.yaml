@@ -10,24 +10,44 @@
 # -- Enable or disable the chart
 enabled: true
 
-variant:
-  # -- Set to true to use StorageClass + PVC (dynamic provisioning)
-  storageclass: ""
-  # -- Set to true to use PV + PVC (static provisioning)
-  pv: ""
+# -- Provisioning variant: "pv" (static, default) or "storageclass" (dynamic)
+# See https://github.com/kubernetes-csi/csi-driver-smb/blob/master/deploy/example/e2e_usage.md
+# TODO: storageclass is not yet fully implemented
+variant: pv
 
-create:
-  # -- Create a test Deployment for validation
-  deployment: false
-  # -- Create the SMB credentials Secret
-  secret: false
-  # -- Create a StorageClass (for storageclass variant)
-  storageclass: true
-  # -- Create a PersistentVolume (for pv variant)
-  pv: true
-  # -- Create a PersistentVolumeClaim
-  pvc: true
+pv:
+  enabled: true
+  # -- Name of the PersistentVolume (if using static provisioning)
+  name: ""
 
+pvc:
+  enabled: true
+  # -- Name of the PersistentVolumeClaim
+  name: ""
+
+# -- Only relevant for dynamic provisioning via StorageClass (variant: "storageclass")
+storageclass:
+  enabled: true
+  # -- Name of the StorageClass
+  name: ""
+
+# -- Use the external-secrets helper chart to create the SMB credentials Secret
+external-secrets:
+  enabled: false
+  name: "smb-creds"
+  commonRemoteKey: ""
+  fields:
+    username:
+      storeRefName: bitwarden-login
+      remoteProperty: username
+    password:
+      storeRefName: bitwarden-login
+      remoteProperty: password
+    domain:
+      static: "WORKGROUP"
+
+
+# -- Settings for the smb share
 smb:
   # -- SMB server hostname or IP
   host: "erolas.elda"
@@ -38,6 +58,7 @@ smb:
   # -- Total available capacity for the share (e.g., 10Gi)
   capacity: "10Gi"
   secret:
+    enabled: false
     # -- Name of the Secret containing SMB credentials (if using existing Secret)
     name: "smb-creds"
     # -- Namespace for the Secret
@@ -49,30 +70,22 @@ smb:
     # -- SMB domain (optional)
     domain: "WORKGROUP"
 
+
+# -- Mount options for the SMB share (need to be implemented by the wrapper chart)
 mount:
   # -- Directory mode for mounted volume
-  dir_mode: ""
+  dir_mode: "0777"
   # -- File mode for mounted volume
-  file_mode: ""
+  file_mode: "0777"
   # -- UID for mounted volume
-  uid: ""
+  uid: "1001"
   # -- GID for mounted volume
-  gid: ""
+  gid: "1001"
   # -- SubPath for mounting
   subPath: ""
   # -- Mount as read-only
   readonly: false
   # -- Requested capacity for the PVC
   capacity: "10Gi"
-
-pv:
-  # -- Name of the PersistentVolume (if using static provisioning)
-  name: ""
-
-pvc:
-  # -- Name of the PersistentVolumeClaim
-  name: ""
-
-storageclass:
-  # -- Name of the StorageClass
-  name: ""
+  # -- Additional mount options
+  extraOptions: []
