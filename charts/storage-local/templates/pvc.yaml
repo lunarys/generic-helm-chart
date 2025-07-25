@@ -1,5 +1,6 @@
-{{- range $name, $pvc := .Values.pvcs }}
-{{- if $pvc.enabled }}
+{{- if .Values.enabled }}
+  {{- range $name, $pvc := .Values.pvcs }}
+    {{- if $pvc.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -12,5 +13,6 @@ spec:
       storage: {{ required "pvcs.size is required" $pvc.size }}
   storageClassName: {{ $pvc.storageClassName | default ( $pvc.autoDelete | ternary $.Values.defaults.storageClassNameAutoDelete $.Values.defaults.storageClassName ) }}
 ---
-{{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}

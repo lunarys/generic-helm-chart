@@ -1,3 +1,5 @@
+enabled: true
+
 defaults:
   storageClassName: local-path
   storageClassNameAutoDelete: local-path-auto-delete

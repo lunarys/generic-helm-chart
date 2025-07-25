@@ -271,3 +271,6 @@ serviceAccount:
 
 networkpolicy:
   enabled: false
+
+storage-local:
+  enabled: false
