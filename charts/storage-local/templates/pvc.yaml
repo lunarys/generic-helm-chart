@@ -6,7 +6,7 @@ metadata:
   name: {{ $name }}
 spec:
   accessModes:
-    - {{ .accessMode | default $.Values.defaults.accessMode }}
+    - {{ $pvc.accessMode | default $.Values.defaults.accessMode }}
   resources:
     requests:
       storage: {{ required "pvcs.size is required" $pvc.size }}
