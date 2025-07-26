@@ -48,7 +48,7 @@ spec:
           {{- end }}
           {{- with .Values.resources }}
           resources:
-            {{- if .limits }}
+            {{- if and .limits (or .limits.memory .limits.cpu) }}
             limits:
               {{- if .limits.memory }}
               memory: {{ .limits.memory }}
@@ -57,7 +57,7 @@ spec:
               cpu: {{ .limits.cpu }}
               {{- end }}
             {{- end }}
-            {{- if .requests }}
+            {{- if and .requests (or .requests.memory .requests.cpu) }}
             requests:
               {{- if .requests.memory }}
               memory: {{ .requests.memory }}
