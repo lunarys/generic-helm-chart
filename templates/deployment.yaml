@@ -48,7 +48,24 @@ spec:
           {{- end }}
           {{- with .Values.resources }}
           resources:
-            {{- toYaml . | nindent 12 }}
+            {{- if .limits }}
+            limits:
+              {{- if .limits.memory }}
+              memory: {{ .limits.memory }}
+              {{- end }}
+              {{- if .limits.cpu }}
+              cpu: {{ .limits.cpu }}
+              {{- end }}
+            {{- end }}
+            {{- if .requests }}
+            requests:
+              {{- if .requests.memory }}
+              memory: {{ .requests.memory }}
+              {{- end }}
+              {{- if .requests.cpu }}
+              cpu: {{ .requests.cpu }}
+              {{- end }}
+            {{- end }}
           {{- end }}
           {{- with .Values.containerSecurityContext }}
           securityContext:
