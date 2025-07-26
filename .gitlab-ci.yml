@@ -13,7 +13,17 @@ helm-unittest:
     - job: helm-lint
       artifacts: false
   script:
-    - helm unittest . --output-type JUnit --output-file helmunittest.junit.xml
+    - helm unittest . --with-subchart=false --output-type JUnit --output-file helmunittest.junit.xml
+
+    - |
+      for dir in charts/*; do
+        if [ -d "$dir" ] && [ -d "$dir/tests" ]; then
+          echo "Running helm unittest for $dir"
+          helm unittest "$dir" --with-subchart=false --output-type JUnit --output-file "helmunittest-$dir.junit.xml"
+        else
+          echo "WARN: there seem to be no tests in $dir"
+        fi
+      done
   artifacts:
     reports:
-      junit: helmunittest.junit.xml
+      junit: helmunittest*.junit.xml
