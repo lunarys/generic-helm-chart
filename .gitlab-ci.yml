@@ -25,10 +25,6 @@ helm-unittest:
         fi
       done
 
-  after_script:
-    - ls -al
-    - ls -al charts/traefik-config
-
   artifacts:
     reports:
       junit: helmunittest*.junit.xml
