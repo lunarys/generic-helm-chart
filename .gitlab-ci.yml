@@ -24,6 +24,11 @@ helm-unittest:
           echo "WARN: there seem to be no tests in $dir"
         fi
       done
+
+  after_script:
+    - ls -al
+    - ls -al charts/traefik-config
+
   artifacts:
     reports:
       junit: helmunittest*.junit.xml
