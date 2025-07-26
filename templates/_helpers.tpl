@@ -55,7 +55,7 @@ Source of truth for the service name
 Expand the name of the chart.
 */}}
 {{- define "ju-common.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default .Release.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
