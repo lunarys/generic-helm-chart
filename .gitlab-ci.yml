@@ -11,4 +11,7 @@ helm-unittest:
     - job: helm-lint
       artifacts: false
   script:
-    - helm unittest .
+    - helm unittest . --output-type JUnit --output-file helmunittest.junit.xml
+  artifacts:
+    reports:
+      junit: helmunittest.junit.xml
