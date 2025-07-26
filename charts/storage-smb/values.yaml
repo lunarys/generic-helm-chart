@@ -62,7 +62,7 @@ smb:
     # -- Name of the Secret containing SMB credentials (if using existing Secret)
     name: "smb-creds"
     # -- Namespace for the Secret
-    namespace: "smb-test"
+    namespace: ""
     # -- SMB username (if creating Secret)
     user:
     # -- SMB password (if creating Secret)
