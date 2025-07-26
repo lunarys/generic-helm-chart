@@ -6,7 +6,9 @@ include:
 helm-unittest:
   #extends: .helm-base
   stage: test
-  image: helmunittest/helm-unittest
+  image: 
+    name: helmunittest/helm-unittest
+    entrypoint: [""]
   needs:
     - job: helm-lint
       artifacts: false
