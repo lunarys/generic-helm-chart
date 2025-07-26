@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.pvc.name | default (printf "%s-pvc-smb-%s" .Release.Name .Chart.Name) | quote }}
+  name: {{ .Values.pvc.name | default (printf "%s-pvc-smb" .Release.Name) | quote }}
 spec:
   accessModes:
     - ReadWriteMany
@@ -15,8 +15,8 @@ spec:
     {{- if and (not .Values.pv.enabled) (not .Values.pv.name) }}
       {{- fail "pv.name for external pv is not set" }}
     {{- end }}
-  volumeName: {{ .Values.pv.name | default (printf "%s-pv-smb-%s" .Release.Name .Chart.Name) | quote }}
   # empty to disable dynamic provisioning via storageclass
+  volumeName: {{ .Values.pv.name | default (printf "%s-pv-smb" .Release.Name) | quote }}
   storageClassName: ""
   {{- else if eq .Values.variant "storageclass" }}
     {{- if and (not .Values.storageclass.enabled) (not .Values.storageclass.name) }}

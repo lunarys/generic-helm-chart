@@ -116,16 +116,20 @@ spec:
               {{- .Values.extraConfig.env | toYaml | nindent 12 }}
             {{- end }}
           {{- end }}
-          #external mounted Spring Boot Properties
-          {{- if .Values.extraConfig.volumeMounts }}
           volumeMounts:
             {{- range .Values.extraConfig.volumeMounts }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly | default false }}
             {{- end }}
-          {{- end }}
-      {{- if .Values.extraConfig.volumeMounts }}
+            {{- if and (index .Values "storage-smb" "enabled") (index .Values "storage-smb" "mount" "enabled") }}
+            - name: smb
+              mountPath: {{ index .Values "storage-smb" "mount" "path" | required "storage-smb.mount.path is required" }}
+              readOnly: {{ index .Values "storage-smb" "mount" "readonly" | default false }}
+              {{- if index .Values "storage-smb" "mount" "subPath" }}
+              subPath: {{ index .Values "storage-smb" "mount" "subPath" }}
+              {{- end }}
+            {{- end }}
       volumes:
         {{- range .Values.extraConfig.volumeMounts }}
         - name: {{ .name }}
@@ -158,7 +162,11 @@ spec:
             {{- fail "Neither hostPath, secretName, configMap nor nfs is defined as volume " -}}
           {{- end }}
         {{- end }}
-      {{- end }}
+        {{- if and (index .Values "storage-smb" "enabled") (index .Values "storage-smb" "mount" "enabled") }}
+        - name: smb
+          persistentVolumeClaim:
+            claimName: {{ index .Values "storage-smb" "pvc" "name" | default (printf "%s-smb-pvc" .Release.Name) }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

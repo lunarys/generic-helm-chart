@@ -81,8 +81,6 @@ mount:
   uid: "1001"
   # -- GID for mounted volume
   gid: "1001"
-  # -- SubPath for mounting
-  subPath: ""
   # -- Mount as read-only
   readonly: false
   # -- Requested capacity for the PVC

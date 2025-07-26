@@ -1,7 +1,3 @@
-# -- child charts
-storage-smb:
-  enabled: false
-
 # -- image pull secret for pulling docker images into a kubernetes cluster. Not needed in our aeb clusters. Only needed for local development.
 imagePullSecrets: []
 
@@ -269,8 +265,20 @@ serviceAccount:
    # - name: my-custom-external-role
    #   kind: Role / ClusterRole
 
+
+#####################################
+# -- child charts
+#####################################
 networkpolicy:
   enabled: false
 
 storage-local:
   enabled: false
+
+storage-smb:
+  enabled: false
+  mount:
+    enabled: true
+    path: ""
+    # -- SubPath for mounting
+    subPath: ""
