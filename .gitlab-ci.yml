@@ -4,8 +4,11 @@ include:
       repos: ""
 
 helm-unittest:
-  extends: .helm-base
+  #extends: .helm-base
   stage: test
   image: helmunittest/helm-unittest
+  needs:
+    - job: helm-lint
+      artifacts: false
   script:
     - helm unittest .
