@@ -119,6 +119,7 @@ traefik-config:
 # -- definition for the deployed kubernetes service
 # @default -- see below
 service:
+  enabled: true
   type: ClusterIP
   name: "{{ .Chart.Name }}"
   # -- default port where the ingress routes the traffic to the service

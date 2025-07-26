@@ -1,3 +1,4 @@
+{{- if .Values.service.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -13,4 +14,4 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
   selector:
     {{- include "ju-common.selectorLabels" . | nindent 4 }}
-
+{{- end }}
