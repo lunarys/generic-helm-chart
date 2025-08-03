@@ -299,3 +299,10 @@ storage-cluster:
     path: ""
     subPath: ""
     readonly: false
+
+
+initCopy:
+  enabled: false
+  fromVolume: ""
+  toVolume: ""
+  force: false

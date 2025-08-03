@@ -196,3 +196,31 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.initCopy.enabled }}
+      initContainers:
+        - name: copy-volume-data
+          image: alpine:3.19
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+            {{- if not .Values.initCopy.force }}
+              # Exclude lost+found from the check
+              if [ -z "$(ls -A /to | grep -v '^lost+found$')" ]; then
+                echo "Target directory /to is empty, proceeding with copy."
+                cp -a /from/. /to/.
+                echo "Copy completed."
+              else
+                echo "Target directory /to is not empty skipping copy."
+              fi
+            {{- else }}
+              cp -a /from/. /to/.
+            {{- end }}
+          volumeMounts:
+            - name: {{ .Values.initCopy.fromVolume | required "initCopy.fromVolume must be set" }}
+              mountPath: /from
+              readOnly: true
+            - name: {{ .Values.initCopy.toVolume | required "initCopy.toVolume must be set" }}
+              mountPath: /to
+              readOnly: false
+      {{- end }}

@@ -82,3 +82,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+initCopy:
+  enabled: true
+  fromVolume: smb
+  toVolume: longhorn
