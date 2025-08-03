@@ -283,3 +283,19 @@ storage-smb:
     path: ""
     # -- SubPath for mounting
     subPath: ""
+
+storage-cluster:
+  enabled: false
+  # -- Size of the storage cluster
+  size: ""
+  # -- Variant of the storage cluster, e.g. auto-delete or retain
+  #variant: ""
+  # -- Name of the storage cluster, if empty a name will be generated
+  #name: ""
+  # -- Set a volume name to reuse an existing volume
+  #pvName: ""
+  mount:
+    enabled: true
+    path: ""
+    subPath: ""
+    readonly: false

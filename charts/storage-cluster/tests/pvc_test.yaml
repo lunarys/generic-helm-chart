@@ -1,0 +1,45 @@
+suite: storage-cluster pvc
+
+templates:
+  - templates/pvc.yaml
+
+tests:
+  - it: should render PVC with correct accessMode, storageClassName, and size
+    set:
+      accessMode: ReadWriteOnce
+      size: 10Gi
+      variant: auto-delete
+    asserts:
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteOnce
+      - equal:
+          path: spec.storageClassName
+          value: longhorn
+      - equal:
+          path: spec.resources.requests.storage
+          value: 10Gi
+
+  - it: should render PVC with volumeName if set
+    set:
+      size: 5Gi
+      pvName: my-volume
+    asserts:
+      - equal:
+          path: spec.volumeName
+          value: my-volume
+
+  - it: should fail if size is not set
+    set:
+      variant: retain
+    asserts:
+      - failedTemplate:
+          errorMessage: size must be set
+
+  - it: should fail if storageClassVariants does not contain the variant
+    set:
+      size: 1Gi
+      variant: foo
+    asserts:
+      - failedTemplate:
+          errorMessage: storageClassVariants must contain the variant

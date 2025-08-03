@@ -1,0 +1,15 @@
+accessMode: ReadWriteOnce
+size: ""
+variant: retain
+
+enabled: true
+name: ""
+
+# -- Set a volume name to reuse an existing volume
+# Probably best to set the pvName here after the pv has been created, such that 
+# the pvc will wait for the pv to be available on recreation.
+pvName: ""
+
+storageClassVariants:
+  auto-delete: longhorn
+  retain: longhorn-retain

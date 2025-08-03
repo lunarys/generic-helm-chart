@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: deployment-smb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+      name: deployment-longhorn-test
+    spec:
+      #nodeSelector:
+      #  "kubernetes.io/os": linux
+      containers:
+        - name: nginx
+          image: mcr.microsoft.com/oss/nginx/nginx:1.19.5
+          command:
+            - "/bin/bash"
+            - "-c"
+            - set -euo pipefail; while true; do echo $(date) > /mnt/longhorn/outfile; sleep 1; done
+          volumeMounts:
+            - name: longhorn
+              mountPath: "/mnt/longhorn"
+              #subPath: {{ .Values.mount.subPath | quote }}
+              #readOnly: {{ .Values.mount.readonly }}
+      volumes:
+        - name: longhorn
+          persistentVolumeClaim:
+            claimName: longhorn-test-longhorn-pvc
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate

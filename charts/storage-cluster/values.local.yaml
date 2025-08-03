@@ -1,0 +1,4 @@
+size: 2Gi
+variant: retain
+
+pvName: "pvc-b20308e2-d3f4-4fb8-800d-ab4fae98a405"

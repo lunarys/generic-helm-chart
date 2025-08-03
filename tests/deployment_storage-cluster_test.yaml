@@ -1,0 +1,87 @@
+suite: storage-cluster mount in deployment
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: should render storage-cluster volumeMount and volume with correct values when enabled and subPath is set
+    set:
+      storage-cluster:
+        enabled: true
+        mount:
+          path: /cluster-data
+          readonly: true
+          subPath: "myclusterfolder"
+        pvc:
+          name: "my-cluster-pvc"
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].mountPath
+          value: /cluster-data
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].readOnly
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].subPath
+          value: myclusterfolder
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+      - equal:
+          path: spec.template.spec.volumes[?(@.name=="longhorn")].persistentVolumeClaim.claimName
+          value: my-cluster-pvc
+
+  - it: should render storage-cluster volumeMount and volume with correct values when enabled and subPath is not set
+    set:
+      storage-cluster:
+        enabled: true
+        mount:
+          enabled: true
+          path: /cluster-data
+          readonly: false
+        pvc:
+          name: "my-cluster-pvc"
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].mountPath
+          value: /cluster-data
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].readOnly
+          value: false
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].subPath
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+      - equal:
+          path: spec.template.spec.volumes[?(@.name=="longhorn")].persistentVolumeClaim.claimName
+          value: my-cluster-pvc
+
+  - it: should not render storage-cluster volumeMount and volume when disabled
+    set:
+      storage-cluster:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+
+  - it: should not render storage-cluster volumeMount and volume when mount.enabled is false
+    set:
+      storage-cluster:
+        enabled: true
+        mount:
+          enabled: false
+          path: /cluster-data
+          readonly: true
+          subPath: "myclusterfolder"
+        pvc:
+          name: "my-cluster-pvc"
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=="longhorn")]
