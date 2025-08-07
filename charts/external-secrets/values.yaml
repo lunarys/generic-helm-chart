@@ -20,6 +20,8 @@ commonRemoteKey: ""
 
 # -- Map of fields to generate from Bitwarden
 fields:
+  # -- Example field configuration. If your field is named `example`, you need to manually enabled it.
+  # If the value to the key is a string, this is the same as setting `static: "value"`.
   example:
     # -- Enable this field
     # @default -- `true`, except for this example
