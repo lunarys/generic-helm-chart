@@ -43,3 +43,14 @@ fields:
     # -- Use a static string for this field.
     # Ignores remoteKey and remoteProperty.
     static: ""
+
+
+# -- Possibility to define multiple secrets. Key-value pairs, the key is the default name.
+secrets:
+  # -- Example secret configuration. If your secret is named `exampleSecret`, you need to manually enabled it.
+  # Supports all individual secret settings.
+  exampleSecret: 
+    enabled: false
+    name: ""
+    targetName: ""
+    fields: {}
