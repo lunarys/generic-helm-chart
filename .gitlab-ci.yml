@@ -31,7 +31,7 @@ helm-unittest:
     - helm unittest "$HELM_CHART_DIRECTORY" --with-subchart=false --output-type JUnit --output-file helmunittest.junit.xml
 
     - |
-      for dir in charts/*; do
+      for dir in "$HELM_CHART_DIRECTORY"/charts/*; do
         if [ -d "$dir" ] && [ -d "$dir/tests" ]; then
           echo "Running helm unittest for $dir"
           helm unittest "$dir" --with-subchart=false --output-type JUnit --output-file "helmunittest-$(basename "$dir").junit.xml"
