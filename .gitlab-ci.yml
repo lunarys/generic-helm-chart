@@ -47,9 +47,10 @@ helm-unittest:
 
 # for tag pipelines, trigger a build of the child charts
 build-child:
+  stage: publish
   trigger:
     include:
-      - local: .gitlab-ci.yaml
+      - local: .gitlab-ci.yml
   variables:
     SEMREL_RELEASE_DISABLED: true
   parallel:
