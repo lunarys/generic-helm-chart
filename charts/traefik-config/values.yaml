@@ -25,7 +25,7 @@ ingress:
     externalAccessAllowed: false
     # -- Internal access allowlist name, deployed separately and centrally.
     # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
-    internalAccessAllowListName: "settings-traefik-internal-access-allowlist@kubernetescrd"
+    internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
 
   # -- Custom annotations for the ingress
   annotations: {}
