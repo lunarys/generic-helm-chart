@@ -6,3 +6,36 @@ name: ""
 
 # -- Policy spec (see Cilium docs for structure)
 spec: {}
+#  spec:
+#    endpointSelector: 
+#      matchLabels: {} # --> https://docs.cilium.io/en/stable/security/policy/kubernetes/#example
+#    ingress:
+#      # Allow ingress traffic from the same namespace, ONLY SEEMS TO WORK for CiliumNetworkPolicy, not ClusterWide...
+#      - fromEndpoints:
+#          - matchLabels: {}
+#    egress:
+#      # Allow egress traffic to the same namespace - DOES NOT WORK for CCNP
+#      - toEndpoints:
+#          - matchLabels: {}
+#      # Allow access to kubernetes api
+#      #- toEntities:
+#      #    - kube-apiserver
+#      # Allow HTTPS to internet (for package updates, external APIs)
+#      #- toEntities:
+#      #   - world
+#      #  toPorts:
+#      #    - ports:
+#      #        - port: "443"
+#      #          protocol: TCP
+#      # Allow DNS to kube-dns in kube-system namespace
+#      #- toEndpoints:
+#      #    - matchLabels:
+#      #        io.kubernetes.pod.namespace: kube-system
+#      #        k8s-app: kube-dns
+#      #  toPorts:
+#      #    - ports:
+#      #        - port: "53"
+#      #          protocol: UDP
+#      #      rules:
+#      #        dns:
+#      #          - matchPattern: "*"
