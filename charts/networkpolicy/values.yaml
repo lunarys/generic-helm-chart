@@ -7,6 +7,8 @@ name: ""
 defaults:
   # -- Default CIDR for local subnet isolation
   localSubnetCidr: 10.0.0.0/22
+  # -- Ingress controller namespace to allow traffic from
+  ingressControllerNamespace: traefik
 
 # -- Preset configuration for common network policy patterns
 preset:
@@ -33,6 +35,8 @@ preset:
     fromWorld: false
     # -- Allow ingress from local subnet CIDR
     fromLocalSubnet: false
+    # -- Allow ingress from ingress controller
+    fromIngressController: true
     # -- Allow all ingress traffic (adds '- {}' rule)
     none: false
     # -- Custom ingress rules (array of rule objects)

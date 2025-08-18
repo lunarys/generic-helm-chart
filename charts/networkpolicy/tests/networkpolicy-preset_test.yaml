@@ -297,6 +297,7 @@ tests:
         ingress:
           fromCluster: true
           fromWorld: true
+          fromIngressController: false
     asserts:
       - lengthEqual:
           path: spec.ingress
@@ -338,3 +339,16 @@ tests:
           content:
             toEntities:
               - cluster
+  
+  - it: should render fromIngressController ingress rule
+    set:
+      preset:
+        ingress:
+          fromIngressController: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  io.kubernetes.pod.namespace: traefik

@@ -31,6 +31,11 @@ spec:
     - fromCIDR:
         - {{ .Values.defaults.localSubnetCidr }}
     {{- end }}
+    {{- if .Values.preset.ingress.fromIngressController }}
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ .Values.defaults.ingressControllerNamespace }}
+    {{- end }}
     {{- range .Values.preset.ingress.rules }}
     - {{ toYaml . | nindent 6 }}
     {{- end }}
