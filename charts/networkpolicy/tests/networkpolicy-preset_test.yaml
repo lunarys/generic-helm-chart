@@ -1,0 +1,340 @@
+suite: Test NetworkPolicy Preset Helm Chart
+
+templates:
+  - networkpolicy-preset.yaml
+
+tests:
+  - it: should not render when chart is disabled
+    set:
+      enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when preset is disabled
+    set:
+      preset:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should set metadata.name from preset.name
+    set:
+      preset:
+        name: my-policy
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-policy
+
+  - it: should use default name when preset.name is empty
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-preset-cnp
+
+  - it: should set endpointSelector from values
+    set:
+      preset:
+        endpointSelector:
+          matchLabels:
+            app: test-app
+    asserts:
+      - equal:
+          path: spec.endpointSelector.matchLabels.app
+          value: test-app
+
+  - it: should not render ingress when unrestricted is true
+    set:
+      preset:
+        ingress:
+          unrestricted: true
+          fromCluster: true
+    asserts:
+      - notExists:
+          path: spec.ingress
+
+  - it: should not render egress when unrestricted is true
+    set:
+      preset:
+        egress:
+          unrestricted: true
+          toCluster: true
+    asserts:
+      - notExists:
+          path: spec.egress
+
+  - it: should render ingress with none rule
+    set:
+      preset:
+        ingress:
+          none: true
+    asserts:
+      - equal:
+          path: spec.ingress[0]
+          value: {}
+
+  - it: should render egress with none rule
+    set:
+      preset:
+        egress:
+          none: true
+    asserts:
+      - equal:
+          path: spec.egress[0]
+          value: {}
+
+  - it: should render namespace isolation for ingress
+    set:
+      preset:
+        namespaceIsolation: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - {}
+
+  - it: should render namespace isolation for egress
+    set:
+      preset:
+        namespaceIsolation: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - {}
+
+  - it: should render fromCluster ingress rule
+    set:
+      preset:
+        ingress:
+          fromCluster: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - cluster
+
+  - it: should render toCluster egress rule
+    set:
+      preset:
+        egress:
+          toCluster: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - cluster
+
+  - it: should render fromWorld ingress rule
+    set:
+      preset:
+        ingress:
+          fromWorld: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - world
+
+  - it: should render toWorld egress rule
+    set:
+      preset:
+        egress:
+          toWorld: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - world
+
+  - it: should render fromNamespace ingress rule
+    set:
+      preset:
+        ingress:
+          fromNamespace: test-namespace
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  io.kubernetes.pod.namespace: test-namespace
+
+  - it: should render toNamespace egress rule
+    set:
+      preset:
+        egress:
+          toNamespace: test-namespace
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  io.kubernetes.pod.namespace: test-namespace
+
+  - it: should render fromLocalSubnet ingress rule
+    set:
+      preset:
+        ingress:
+          fromLocalSubnet: true
+      defaults:
+        localSubnetCidr: 192.168.0.0/16
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromCIDR:
+              - 192.168.0.0/16
+
+  - it: should render toLocalSubnet egress rule
+    set:
+      preset:
+        egress:
+          toLocalSubnet: true
+      defaults:
+        localSubnetCidr: 192.168.0.0/16
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 192.168.0.0/16
+
+  - it: should render toKubeApi egress rule
+    set:
+      preset:
+        egress:
+          toKubeApi: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - kube-apiserver
+
+  - it: should render toKubeDns egress rule
+    set:
+      preset:
+        egress:
+          toKubeDns: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  io.kubernetes.pod.namespace: kube-system
+                  k8s-app: kube-dns
+            toPorts:
+              - ports:
+                  - port: "53"
+                    protocol: UDP
+                rules:
+                  dns:
+                    - matchPattern: "*"
+
+  - it: should render custom ingress rules
+    set:
+      preset:
+        ingress:
+          rules:
+            - fromEndpoints:
+                - matchLabels:
+                    app: custom-app
+              toPorts:
+                - ports:
+                    - port: "8080"
+                      protocol: TCP
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  app: custom-app
+            toPorts:
+              - ports:
+                  - port: "8080"
+                    protocol: TCP
+
+  - it: should render custom egress rules
+    set:
+      preset:
+        egress:
+          rules:
+            - toEndpoints:
+                - matchLabels:
+                    app: database
+              toPorts:
+                - ports:
+                    - port: "5432"
+                      protocol: TCP
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  app: database
+            toPorts:
+              - ports:
+                  - port: "5432"
+                    protocol: TCP
+
+  - it: should combine multiple ingress rules
+    set:
+      preset:
+        namespaceIsolation: true
+        ingress:
+          fromCluster: true
+          fromWorld: true
+    asserts:
+      - lengthEqual:
+          path: spec.ingress
+          count: 3
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - {}
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - cluster
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - world
+
+  - it: should combine multiple egress rules
+    set:
+      preset:
+        namespaceIsolation: true
+        egress:
+          toCluster: true
+          toKubeDns: true
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 3
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - {}
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - cluster

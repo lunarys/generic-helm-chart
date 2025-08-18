@@ -4,6 +4,62 @@ enabled: true
 # -- Name of the CiliumNetworkPolicy resource
 name: ""
 
+defaults:
+  # -- Default CIDR for local subnet isolation
+  localSubnetCidr: 10.0.0.0/22
+
+# -- Preset configuration for common network policy patterns
+preset:
+  # -- Enable the preset network policy template
+  enabled: true
+  # -- Name of the preset CiliumNetworkPolicy resource
+  name: ""
+
+  # -- Endpoint selector to target specific pods, defaults to all pods in the namespace
+  endpointSelector: {}
+
+  # -- Enable namespace isolation (allow traffic only within the same namespace)
+  namespaceIsolation: true
+
+  # -- Ingress traffic configuration
+  ingress:
+    # -- Allow all ingress traffic (policy section will be omitted)
+    unrestricted: false
+    # -- Allow ingress from all cluster entities
+    fromCluster: false
+    # -- Allow ingress from a specific namespace
+    fromNamespace: ""
+    # -- Allow ingress from the world (external traffic)
+    fromWorld: false
+    # -- Allow ingress from local subnet CIDR
+    fromLocalSubnet: false
+    # -- Allow all ingress traffic (adds '- {}' rule)
+    none: false
+    # -- Custom ingress rules (array of rule objects)
+    rules: []
+
+  # -- Egress traffic configuration
+  egress:
+    # -- Allow all egress traffic (policy section will be omitted)
+    unrestricted: false
+    # -- Allow egress to all cluster entities
+    toCluster: false
+    # -- Allow egress to a specific namespace
+    toNamespace: ""
+    # -- Allow egress to the world (external traffic)
+    toWorld: false
+    # -- Allow egress to local subnet CIDR
+    toLocalSubnet: false
+    # -- Allow egress to Kubernetes API server
+    toKubeApi: false
+    # -- Allow egress to kube-dns for DNS resolution
+    toKubeDns: true
+    # -- Allow all egress traffic (adds '- {}' rule)
+    none: false
+    # -- Custom egress rules (array of rule objects)
+    rules: []
+
+
 # -- Policy spec (see Cilium docs for structure)
 spec: {}
 #  spec:

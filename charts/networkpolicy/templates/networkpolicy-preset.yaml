@@ -1,0 +1,87 @@
+{{- if and .Values.enabled .Values.preset.enabled }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Values.preset.name | default (printf "%s-preset-cnp" .Release.Name) }}
+spec:
+  endpointSelector: {{ toYaml .Values.preset.endpointSelector | nindent 4 }}
+  {{- if not .Values.preset.ingress.unrestricted }}
+  ingress:
+    {{- if .Values.preset.ingress.none }}
+    - {}
+    {{- else }}
+    {{- if .Values.preset.namespaceIsolation }}
+    - fromEndpoints:
+        - {}
+    {{- end }}
+    {{- if .Values.preset.ingress.fromNamespace }}
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ .Values.preset.ingress.fromNamespace }}
+    {{- end }}
+    {{- if .Values.preset.ingress.fromCluster }}
+    - fromEntities:
+        - cluster
+    {{- end }}
+    {{- if .Values.preset.ingress.fromWorld }}
+    - fromEntities:
+        - world
+    {{- end }}
+    {{- if .Values.preset.ingress.fromLocalSubnet }}
+    - fromCIDR:
+        - {{ .Values.defaults.localSubnetCidr }}
+    {{- end }}
+    {{- range .Values.preset.ingress.rules }}
+    - {{ toYaml . | nindent 6 }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if not .Values.preset.egress.unrestricted }}
+  egress:
+    {{- if .Values.preset.egress.none }}
+    - {}
+    {{- else }}
+    {{- if .Values.preset.namespaceIsolation }}
+    - toEndpoints:
+        - {}
+    {{- end }}
+    {{- if .Values.preset.egress.toNamespace }}
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ .Values.preset.egress.toNamespace }}
+    {{- end }}
+    {{- if .Values.preset.egress.toCluster }}
+    - toEntities:
+        - cluster
+    {{- end }}
+    {{- if .Values.preset.egress.toWorld }}
+    - toEntities:
+        - world
+    {{- end }}
+    {{- if .Values.preset.egress.toLocalSubnet }}
+    - toCIDR:
+        - {{ .Values.defaults.localSubnetCidr }}
+    {{- end }}
+    {{- if .Values.preset.egress.toKubeApi }}
+    - toEntities:
+        - kube-apiserver
+    {{- end }}
+    {{- if .Values.preset.egress.toKubeDns }}
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*"
+    {{- end }}
+    {{- range .Values.preset.egress.rules }}
+    - {{ toYaml . | nindent 6 }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
