@@ -4,7 +4,7 @@ apiVersion: v1
 metadata:
   name: {{ include "ju-common.serviceName" . }}
   labels:
-  {{- include "ju-common.labels" . | nindent 4 }}
+    {{- include "ju-common.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -14,4 +14,10 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
   selector:
     {{- include "ju-common.selectorLabels" . | nindent 4 }}
+  {{- if .Values.service.externalIPs }}
+  externalIPs:
+    {{- range $ip := .Values.service.externalIPs }}
+    - {{ $ip }}
+    {{- end }}
+  {{- end }}
 {{- end }}

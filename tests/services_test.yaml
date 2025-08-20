@@ -1,0 +1,292 @@
+suite: Test Services Template
+
+templates:
+  - ../templates/services.yaml
+
+tests:
+  - it: should not render when services are disabled
+    set:
+      services:
+        test:
+          enabled: false
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render single service when enabled
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-test
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: should render multiple services when enabled
+    set:
+      services:
+        web:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+        api:
+          enabled: true
+          type: NodePort
+          ports:
+            rest:
+              enabled: true
+              protocol: TCP
+              port: 3000
+              targetPort: 3000
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should set correct service type
+    set:
+      services:
+        test:
+          enabled: true
+          type: NodePort
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+
+  - it: should render enabled ports only
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+            https:
+              enabled: false
+              protocol: TCP
+              port: 443
+              targetPort: 8443
+            metrics:
+              enabled: true
+              protocol: TCP
+              port: 9090
+              targetPort: 9090
+    asserts:
+      - lengthEqual:
+          path: spec.ports
+          count: 2
+      - contains:
+          path: spec.ports
+          content:
+            name: http
+            protocol: TCP
+            port: 80
+            targetPort: 8080
+      - contains:
+          path: spec.ports
+          content:
+            name: metrics
+            protocol: TCP
+            port: 9090
+            targetPort: 9090
+
+  - it: should set correct port properties
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            custom:
+              enabled: true
+              protocol: UDP
+              port: 5432
+              targetPort: 54321
+    asserts:
+      - equal:
+          path: spec.ports[0].name
+          value: custom
+      - equal:
+          path: spec.ports[0].protocol
+          value: UDP
+      - equal:
+          path: spec.ports[0].port
+          value: 5432
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 54321
+
+  - it: should include externalIPs when specified
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          externalIPs:
+            - 192.168.1.100
+            - 192.168.1.101
+    asserts:
+      - equal:
+          path: spec.externalIPs
+          value:
+            - 192.168.1.100
+            - 192.168.1.101
+
+  - it: should not include externalIPs when not specified
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.externalIPs
+
+  - it: should include correct labels
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - exists:
+          path: metadata.labels
+      - exists:
+          path: spec.selector
+
+  - it: should handle multiple ports with different protocols
+    set:
+      services:
+        test:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+            dns:
+              enabled: true
+              protocol: UDP
+              port: 53
+              targetPort: 53
+            grpc:
+              enabled: true
+              protocol: TCP
+              port: 9000
+              targetPort: 9000
+    asserts:
+      - lengthEqual:
+          path: spec.ports
+          count: 3
+      - contains:
+          path: spec.ports
+          content:
+            name: http
+            protocol: TCP
+            port: 80
+            targetPort: 8080
+      - contains:
+          path: spec.ports
+          content:
+            name: dns
+            protocol: UDP
+            port: 53
+            targetPort: 53
+      - contains:
+          path: spec.ports
+          content:
+            name: grpc
+            protocol: TCP
+            port: 9000
+            targetPort: 9000
+
+  - it: should handle mixed enabled and disabled services
+    set:
+      services:
+        web:
+          enabled: true
+          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+        api:
+          enabled: false
+          type: ClusterIP
+          ports:
+            rest:
+              enabled: true
+              protocol: TCP
+              port: 3000
+              targetPort: 3000
+        database:
+          enabled: true
+          type: ClusterIP
+          ports:
+            postgres:
+              enabled: true
+              protocol: TCP
+              port: 5432
+              targetPort: 5432
+    asserts:
+      - hasDocuments:
+          count: 2

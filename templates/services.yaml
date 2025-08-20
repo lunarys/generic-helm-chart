@@ -1,0 +1,30 @@
+{{- range $name, $service := .Values.services }}
+{{- if $service.enabled }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "ju-common.serviceName" $ }}-{{ $name }}
+  labels:
+    {{- include "ju-common.labels" $ | nindent 4 }}
+spec:
+  type: {{ $service.type }}
+  ports:
+    {{- range $portName, $port := $service.ports }}
+    {{- if $port.enabled }}
+    - name: {{ $portName }}
+      protocol: {{ $port.protocol }}
+      port: {{ $port.port }}
+      targetPort: {{ $port.targetPort }}
+    {{- end }}
+    {{- end }}
+  selector:
+    {{- include "ju-common.selectorLabels" $ | nindent 4 }}
+  {{- if $service.externalIPs }}
+  externalIPs:
+    {{- range $ip := $service.externalIPs }}
+    - {{ $ip }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
