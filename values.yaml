@@ -340,6 +340,20 @@ storage-cluster:
     readonly: false
 
 
+# -- Settings for external-secrets integration.
+external-secrets:
+  mount:
+    # -- Whether to mount the default secret as environment variables.
+    env: false
+    # -- Path to mount the secret as a file (not implemented).
+    # TODO: not implemented
+    mountPath: ""
+  secrets:
+    exampleSecret:
+      mount: 
+        # -- Whether to mount this secret as environment variables.
+        env: false
+
 initCopy:
   enabled: false
   fromVolume: ""

@@ -1,0 +1,370 @@
+suite: Test Deployment envFrom External Secrets
+
+templates:
+  - deployment.yaml
+
+tests:
+  - it: should not render envFrom external-secrets when external-secrets is disabled
+    set:
+      external-secrets:
+        enabled: false
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value: null
+
+  - it: should not render envFrom external-secrets when mount.env is disabled
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: false
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value: null
+
+  - it: should render envFrom for main external-secret when enabled and mount.env is true
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: RELEASE-NAME-external-secret
+
+  - it: should render envFrom with custom name for main external-secret
+    set:
+      external-secrets:
+        enabled: true
+        name: my-custom-secret
+        mount:
+          env: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: my-custom-secret
+
+  - it: should render envFrom for individual secrets when enabled and mount.env is true
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: false
+        secrets:
+          db-secret:
+            enabled: true
+            mount:
+              env: true
+          api-secret:
+            enabled: true
+            mount:
+              env: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 2
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: db-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: api-secret
+
+  - it: should render envFrom for individual secrets with custom names
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: false
+        secrets:
+          db-secret:
+            enabled: true
+            name: database-credentials
+            mount:
+              env: true
+          api-secret:
+            enabled: true
+            name: api-tokens
+            mount:
+              env: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: database-credentials
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: api-tokens
+
+  - it: should not render envFrom for disabled individual secrets
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: false
+        secrets:
+          enabled-secret:
+            enabled: true
+            mount:
+              env: true
+          disabled-secret:
+            enabled: false
+            mount:
+              env: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: enabled-secret
+
+  - it: should not render envFrom for individual secrets without mount.env
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: false
+        secrets:
+          secret-with-env:
+            enabled: true
+            mount:
+              env: true
+          secret-without-env:
+            enabled: true
+            mount:
+              env: false
+          secret-no-mount:
+            enabled: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: secret-with-env
+
+  - it: should combine main external-secret and individual secrets
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: true
+        secrets:
+          additional-secret:
+            enabled: true
+            mount:
+              env: true
+      extraConfig:
+        secrets: []
+        configmaps: []
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 2
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: RELEASE-NAME-external-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: additional-secret
+
+  - it: should combine external-secrets with extraConfig secrets
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: true
+      extraConfig:
+        secrets:
+          - legacy-secret-1
+          - legacy-secret-2
+        configmaps: []
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 3
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: RELEASE-NAME-external-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: legacy-secret-1
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: legacy-secret-2
+
+  - it: should combine external-secrets with extraConfig configmaps
+    set:
+      external-secrets:
+        enabled: true
+        mount:
+          env: true
+      extraConfig:
+        secrets: []
+        configmaps:
+          - app-config
+          - logging-config
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 3
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: RELEASE-NAME-external-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: app-config
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: logging-config
+
+  - it: should render envFrom only with extraConfig when external-secrets is disabled
+    set:
+      external-secrets:
+        enabled: false
+      extraConfig:
+        secrets:
+          - manual-secret
+        configmaps:
+          - manual-configmap
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 2
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: manual-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: manual-configmap
+
+  - it: should handle complex scenario with all envFrom sources
+    set:
+      external-secrets:
+        enabled: true
+        name: main-external-secret
+        mount:
+          env: true
+        secrets:
+          db-credentials:
+            enabled: true
+            name: database-secret
+            mount:
+              env: true
+          api-keys:
+            enabled: true
+            mount:
+              env: true
+          disabled-secret:
+            enabled: false
+            mount:
+              env: true
+      extraConfig:
+        secrets:
+          - legacy-secret
+        configmaps:
+          - app-config
+          - feature-flags
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 6
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: main-external-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: database-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: api-keys
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: legacy-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: app-config
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: feature-flags

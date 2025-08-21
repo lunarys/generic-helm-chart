@@ -106,6 +106,20 @@ spec:
           {{- end }}
           #config values that comes from the configmap 
           envFrom:
+            {{- with (index .Values "external-secrets" )}}
+            {{- if .enabled }}
+            {{- if .mount.env }}
+            - secretRef:
+                name: {{ default (printf "%s-external-secret" $.Release.Name) .name }}
+            {{- end }}
+            {{- range $key, $value := .secrets }}
+            {{- if and $value.enabled (hasKey $value "mount") $value.mount.env }}
+            - secretRef:
+                name: {{ default $key $value.name }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
             {{- range .Values.extraConfig.secrets }}
             - secretRef:
                 name: {{ . }}
@@ -117,6 +131,7 @@ spec:
           {{- if or .Values.env .Values.extraConfig.env }}
           env:
             {{- if .Values.env }}
+            # settings from 'env'
             {{- range $name, $value := .Values.env }}
             - name: {{ default $name | quote }}
               {{- if kindIs "string" $value }}
@@ -127,7 +142,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.extraConfig.env }}
-            # Deprecated variable settings from `extraConfig.env`
+            # Deprecated variable settings from 'extraConfig.env'
               {{- .Values.extraConfig.env | toYaml | nindent 12 }}
             {{- end }}
           {{- end }}
