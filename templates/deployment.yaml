@@ -114,9 +114,20 @@ spec:
             - configMapRef:
                 name: {{ . }}
             {{- end }}
-          {{- if .Values.extraConfig.env }}
+          {{- if or .Values.env .Values.extraConfig.env }}
           env:
+            {{- if .Values.env }}
+            {{- range $name, $value := .Values.env }}
+            - name: {{ default $name | quote }}
+              {{- if kindIs "string" $value }}
+              value: {{ $value | quote }}
+              {{- else }}
+              {{- omit $value "name" | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.extraConfig.env }}
+            # Deprecated variable settings from `extraConfig.env`
               {{- .Values.extraConfig.env | toYaml | nindent 12 }}
             {{- end }}
           {{- end }}

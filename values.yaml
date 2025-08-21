@@ -196,6 +196,21 @@ deployment:
   # @default -- false
   autoRestartOnSecretChange: ""
 
+
+# -- Possibility to add additional [environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) to your application. 
+env: {}
+  # if you want pass kubernetes specific values to your app 
+  #   KUBE_NAMESPACE: 
+  #     valueFrom:
+  #       fieldRef:
+  #         fieldPath: metadata.namespace  
+  # if you want to set additional env variables
+  #   DEMO_GREETING: "Hello from the environment"
+  #   DEMO_FAREWELL: 
+  #     value: "Such a sweet sorrow"
+
+
+
 # -- possibility to mount additional secrets, configmaps or volumemounts to your application. Have a look at the values.yaml below for examples.
 # @default -- see below
 extraConfig:
@@ -217,8 +232,9 @@ extraConfig:
 #   configmaps:
 #     - some-external-configs
 
-  # -- Possibility to add additional [environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) to your application. 
-  env: []  # <-- TODO: allow as object...
+  # -- DEPRECATED: Possibility to add additional [environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) to your application. 
+  # Use `env` instead of `extraConfig.env`.
+  env: []
    # if you want pass kubernetes specific values to your app 
    # - name: KUBE_NAMESPACE
    #   valueFrom:

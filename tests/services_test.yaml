@@ -1,7 +1,7 @@
 suite: Test Services Template
 
 templates:
-  - ../templates/services.yaml
+  - services.yaml
 
 tests:
   - it: should not render when services are disabled

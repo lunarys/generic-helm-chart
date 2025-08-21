@@ -1,0 +1,279 @@
+suite: Test Deployment Environment Variables
+
+templates:
+  - deployment.yaml
+
+tests:
+  - it: should not render env section when both env and extraConfig.env are disabled
+    set:
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env
+
+  - it: should render env section when extraConfig.env is enabled even with empty env
+    set:
+      env: {}
+      extraConfig:
+        env:
+          - name: LEGACY_VAR
+            value: "legacy_value"
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].env
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LEGACY_VAR
+            value: "legacy_value"
+
+  - it: should render simple string environment variables
+    set:
+      env:
+        DATABASE_URL: "postgres://localhost:5432/mydb"
+        API_KEY: "secret123"
+        DEBUG: "true"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATABASE_URL
+            value: "postgres://localhost:5432/mydb"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_KEY
+            value: "secret123"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DEBUG
+            value: "true"
+
+  - it: should render environment variables from secret references
+    set:
+      env:
+        DB_PASSWORD:
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        API_TOKEN:
+          valueFrom:
+            secretKeyRef:
+              name: api-secret
+              key: token
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: password
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: api-secret
+                key: token
+
+  - it: should render environment variables from configmap references
+    set:
+      env:
+        APP_CONFIG:
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: config.yaml
+        LOG_LEVEL:
+          valueFrom:
+            configMapKeyRef:
+              name: logging-config
+              key: level
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: config.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                name: logging-config
+                key: level
+
+  - it: should render environment variables from field references
+    set:
+      env:
+        POD_NAME:
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        NODE_NAME:
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+
+  - it: should render mixed string and object environment variables
+    set:
+      env:
+        SIMPLE_VAR: "simple_value"
+        SECRET_VAR:
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: password
+        CONFIG_VAR:
+          valueFrom:
+            configMapKeyRef:
+              name: my-config
+              key: setting
+        FIELD_VAR:
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 4
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SIMPLE_VAR
+            value: "simple_value"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SECRET_VAR
+            valueFrom:
+              secretKeyRef:
+                name: my-secret
+                key: password
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONFIG_VAR
+            valueFrom:
+              configMapKeyRef:
+                name: my-config
+                key: setting
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_VAR
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+
+  - it: should combine new env with legacy extraConfig.env
+    set:
+      env:
+        NEW_VAR: "new_value"
+        SECRET_VAR:
+          valueFrom:
+            secretKeyRef:
+              name: new-secret
+              key: password
+      extraConfig:
+        env:
+          - name: LEGACY_VAR
+            value: "legacy_value"
+          - name: LEGACY_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: legacy-secret
+                key: token
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 4
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_VAR
+            value: "new_value"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SECRET_VAR
+            valueFrom:
+              secretKeyRef:
+                name: new-secret
+                key: password
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LEGACY_VAR
+            value: "legacy_value"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LEGACY_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: legacy-secret
+                key: token
+
+  - it: should handle complex environment variable objects with additional properties
+    set:
+      env:
+        RESOURCE_VAR:
+          valueFrom:
+            resourceFieldRef:
+              containerName: my-container
+              resource: limits.memory
+              divisor: "1Mi"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RESOURCE_VAR
+            valueFrom:
+              resourceFieldRef:
+                containerName: my-container
+                resource: limits.memory
+                divisor: "1Mi"
+
+  - it: should properly handle empty string values
+    set:
+      env:
+        EMPTY_VAR: ""
+        NON_EMPTY_VAR: "value"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EMPTY_VAR
+            value: ""
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NON_EMPTY_VAR
+            value: "value"
