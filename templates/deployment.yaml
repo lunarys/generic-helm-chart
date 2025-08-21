@@ -32,7 +32,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- include "ju-common.podSecurityContext" . | nindent 8 }}
       {{- if include "ju-backend.isCustomizedServiceAccount" . }}
       serviceAccountName: {{ include "ju-backend.serviceAccountName" . | quote }}
       {{- end }}
@@ -67,10 +67,8 @@ spec:
               {{- end }}
             {{- end }}
           {{- end }}
-          {{- with .Values.containerSecurityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- include "ju-common.containerSecurityContext" . | nindent 12 }}
           #readiness & liveness
           {{- if .Values.livenessProbe.enabled }}
           {{- if .Values.livenessProbe.override }}

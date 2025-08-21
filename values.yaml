@@ -70,16 +70,36 @@ affinity: {}
 
 # -- define privilege and access control settings for a pod. For more information have a look at the [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 podSecurityContext: {}
-  # fsGroup: 2000
+
+# -- Use `podSecurityContextPreset` if `podSecurityContext` is not set.
+usePodSecurityContextPreset: true
+# -- Preset for securityContext, will be used if `podSecurityContext` is not set 
+# and `usePodSecurityContextPreset` is enabled.
+podSecurityContextPreset:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
 
 # -- define privilege and access control settings for a pod. For more information have a look at the [docs](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 containerSecurityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+
+# -- Use `containerSecurityContextPreset` if `containerSecurityContext` is not set.
+useContainerSecurityContextPreset: true
+# Preset for securityContext, willbe used if `containerSecurityContext` is not set
+# and `useContainerSecurityContextPreset` is enabled.
+containerSecurityContextPreset:
+  allowPrivilegeEscalation: false
+  privileged: false
+  runAsNonRoot: true
+  # -- Should be enabled if the container supports it.
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
 
 # -- General ingress settings
 ingress:

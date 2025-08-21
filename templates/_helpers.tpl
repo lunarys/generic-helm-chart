@@ -205,3 +205,24 @@ true
 {{- /* Workaround: Leave this empty to evaluate to false, as "false" would be interpreted as a truthy string */ -}}
 {{- end -}}
 {{- end -}}
+
+
+{{- define "ju-common.podSecurityContext" -}}
+{{- if .Values.podSecurityContext -}}
+{{ tpl (toYaml .Values.podSecurityContext) . }}
+{{- else if .Values.usePodSecurityContextPreset -}}
+{{ tpl (toYaml .Values.podSecurityContextPreset) . }}
+{{- else -}}
+{}
+{{- end -}}
+{{- end }}
+
+{{- define "ju-common.containerSecurityContext" -}}
+{{- if .Values.containerSecurityContext -}}
+{{ tpl ( .Values.containerSecurityContext) . }}
+{{- else if .Values.useContainerSecurityContextPreset -}}
+{{ tpl (toYaml .Values.containerSecurityContextPreset) . }}
+{{- else -}}
+{}
+{{- end -}}
+{{- end }}
