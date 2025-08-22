@@ -8,10 +8,10 @@ metadata:
   labels:
     {{- include "ju-common.labels" $ | nindent 4 }}
 spec:
-  type: {{ $service.type }}
+  type: {{ $service.type | default "ClusterIP" }}
   ports:
     {{- range $portName, $port := $service.ports }}
-    {{- if $port.enabled }}
+    {{- if or (not (hasKey $port "enabled")) $port.enabled }}
     - name: {{ $portName }}
       protocol: {{ $port.protocol }}
       port: {{ $port.port }}

@@ -160,7 +160,7 @@ services:
     ports:
       example:
         # -- Enable or disable this port.
-        enabled: false
+        enabled: true
         # -- Protocol for the service port (e.g., TCP, UDP).
         protocol: "TCP"
         # -- Port exposed by the service.

@@ -290,3 +290,31 @@ tests:
     asserts:
       - hasDocuments:
           count: 2
+
+  - it: should have default service type as ClusterIP
+    set:
+      services:
+        test:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: should enable ports by default with minimal config
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              port: 80
+    asserts:
+      - isNotEmpty:
+          path: spec.ports
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+      - equal:
+          path: spec.ports[0].name
+          value: http
