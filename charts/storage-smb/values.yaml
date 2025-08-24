@@ -31,8 +31,8 @@ storageclass:
   # -- Name of the StorageClass
   name: ""
 
-# -- Use the external-secrets helper chart to create the SMB credentials Secret
-external-secrets:
+# -- Use the externalsecrets helper chart to create the SMB credentials Secret
+externalsecrets:
   enabled: false
   name: "smb-creds"
   commonRemoteKey: ""

@@ -104,7 +104,7 @@ spec:
           {{- end }}
           #config values that comes from the configmap 
           envFrom:
-            {{- with (index .Values "external-secrets" )}}
+            {{- with .Values.externalsecrets }}
             {{- if .enabled }}
             {{- if .mount.env }}
             - secretRef:
@@ -168,7 +168,7 @@ spec:
               subPath: {{ $volume.mount.subPath }}
               {{- end }}
             {{- end }}
-              {{- end }}
+            {{- end }}
             {{- end }}
       volumes:
         {{- range .Values.extraConfig.volumeMounts }}

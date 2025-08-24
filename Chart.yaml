@@ -8,7 +8,7 @@ dependencies:
     version: 0.1.0  # must match the version in the subchart...
   - name: traefik-config
     version: 0.1.0
-  - name: external-secrets
+  - name: externalsecrets
     version: 0.1.0
   - name: networkpolicy
     version: 0.1.0

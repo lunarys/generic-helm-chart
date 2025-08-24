@@ -4,9 +4,9 @@ templates:
   - deployment.yaml
 
 tests:
-  - it: should not render envFrom external-secrets when external-secrets is disabled
+  - it: should not render envFrom externalsecrets when externalsecrets is disabled
     set:
-      external-secrets:
+      externalsecrets:
         enabled: false
       extraConfig:
         secrets: []
@@ -18,9 +18,9 @@ tests:
           path: spec.template.spec.containers[0].envFrom
           value: null
 
-  - it: should not render envFrom external-secrets when mount.env is disabled
+  - it: should not render envFrom externalsecrets when mount.env is disabled
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: false
@@ -36,7 +36,7 @@ tests:
 
   - it: should render envFrom for main external-secret when enabled and mount.env is true
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: true
@@ -54,7 +54,7 @@ tests:
 
   - it: should render envFrom with custom name for main external-secret
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         name: my-custom-secret
         mount:
@@ -71,7 +71,7 @@ tests:
 
   - it: should render envFrom for individual secrets when enabled and mount.env is true
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: false
@@ -104,7 +104,7 @@ tests:
 
   - it: should render envFrom for individual secrets with custom names
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: false
@@ -136,7 +136,7 @@ tests:
 
   - it: should not render envFrom for disabled individual secrets
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: false
@@ -164,7 +164,7 @@ tests:
 
   - it: should not render envFrom for individual secrets without mount.env
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: false
@@ -194,7 +194,7 @@ tests:
 
   - it: should combine main external-secret and individual secrets
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: true
@@ -221,9 +221,9 @@ tests:
             secretRef:
               name: additional-secret
 
-  - it: should combine external-secrets with extraConfig secrets
+  - it: should combine externalsecrets with extraConfig secrets
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: true
@@ -252,9 +252,9 @@ tests:
             secretRef:
               name: legacy-secret-2
 
-  - it: should combine external-secrets with extraConfig configmaps
+  - it: should combine externalsecrets with extraConfig configmaps
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         mount:
           env: true
@@ -283,9 +283,9 @@ tests:
             configMapRef:
               name: logging-config
 
-  - it: should render envFrom only with extraConfig when external-secrets is disabled
+  - it: should render envFrom only with extraConfig when externalsecrets is disabled
     set:
-      external-secrets:
+      externalsecrets:
         enabled: false
       extraConfig:
         secrets:
@@ -309,7 +309,7 @@ tests:
 
   - it: should handle complex scenario with all envFrom sources
     set:
-      external-secrets:
+      externalsecrets:
         enabled: true
         name: main-external-secret
         mount:

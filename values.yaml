@@ -372,8 +372,8 @@ storage-cluster:
         readonly: false
 
 
-# -- Settings for external-secrets integration.
-external-secrets:
+# -- Settings for externalsecrets integration.
+externalsecrets:
   mount:
     # -- Whether to mount the default secret as environment variables.
     env: false
