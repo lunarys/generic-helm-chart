@@ -310,6 +310,12 @@ extraConfig:
     #  nfs:
     #   server: "" # the address of the NFS server
     #   path: "" # the path on the NFS server
+    
+    ### emptyDir mount -- more information about emptyDir [here](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir)
+    #  emptyDir: {} # creates an emptyDir volume
+    #  # Optional settings for emptyDir:
+    #  # sizeLimit: "1Gi" # limit the size of the emptyDir volume
+    #  # medium: "Memory" # use tmpfs (RAM) instead of disk storage
 
 
 # -- Settings for the ServiceAccount for this deployment. These are only applied if there is are any non-default roles (leader election or explicit role bindings).

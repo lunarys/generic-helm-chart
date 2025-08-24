@@ -194,8 +194,16 @@ spec:
           nfs:
             server: {{ .nfs.server }}
             path: {{ .nfs.path }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- if .sizeLimit }}
+            sizeLimit: {{ .sizeLimit }}
+            {{- end }}
+            {{- if .medium }}
+            medium: {{ .medium }}
+            {{- end }}
           {{- else }}
-            {{- fail "Neither hostPath, secretName, configMap nor nfs is defined as volume " -}}
+            {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume " -}}
           {{- end }}
         {{- end }}
         {{- if and (index .Values "storage-smb" "enabled") (index .Values "storage-smb" "mount" "enabled") }}
