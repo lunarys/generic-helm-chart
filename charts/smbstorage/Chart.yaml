@@ -1,5 +1,5 @@
 apiVersion: v2
-name: storage-smb
+name: smbstorage
 description: SMB storage helper
 
 # A chart can be either an 'application' or a 'library' chart.

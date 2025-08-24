@@ -1,4 +1,4 @@
-suite: storage-smb mount in deployment
+suite: smbstorage mount in deployment
 
 templates:
   - templates/deployment.yaml
@@ -6,7 +6,7 @@ templates:
 tests:
   - it: should render SMB volumeMount and volume with correct values when enabled and subPath is set
     set:
-      storage-smb:
+      smbstorage:
         enabled: true
         mount:
           path: /data
@@ -34,7 +34,7 @@ tests:
 
   - it: should render SMB volumeMount and volume with correct values when enabled and subPath is not set
     set:
-      storage-smb:
+      smbstorage:
         enabled: true
         mount:
           enabled: true
@@ -61,7 +61,7 @@ tests:
 
   - it: should not render SMB volumeMount and volume when disabled
     set:
-      storage-smb:
+      smbstorage:
         enabled: false
     asserts:
       - notExists:
@@ -71,7 +71,7 @@ tests:
 
   - it: should not render SMB volumeMount and volume when mount.enabled is false
     set:
-      storage-smb:
+      smbstorage:
         enabled: true
         mount:
           enabled: false

@@ -341,7 +341,7 @@ networkpolicy:
 localstorage:
   enabled: false
 
-storage-smb:
+smbstorage:
   enabled: false
   mount:
     enabled: true

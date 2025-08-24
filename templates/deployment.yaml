@@ -150,12 +150,12 @@ spec:
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly | default false }}
             {{- end }}
-            {{- if and (index .Values "storage-smb" "enabled") (index .Values "storage-smb" "mount" "enabled") }}
+            {{- if and (index .Values "smbstorage" "enabled") (index .Values "smbstorage" "mount" "enabled") }}
             - name: smb
-              mountPath: {{ index .Values "storage-smb" "mount" "path" | required "storage-smb.mount.path is required" }}
-              readOnly: {{ index .Values "storage-smb" "mount" "readonly" | default false }}
-              {{- if index .Values "storage-smb" "mount" "subPath" }}
-              subPath: {{ index .Values "storage-smb" "mount" "subPath" }}
+              mountPath: {{ index .Values "smbstorage" "mount" "path" | required "smbstorage.mount.path is required" }}
+              readOnly: {{ index .Values "smbstorage" "mount" "readonly" | default false }}
+              {{- if index .Values "smbstorage" "mount" "subPath" }}
+              subPath: {{ index .Values "smbstorage" "mount" "subPath" }}
               {{- end }}
             {{- end }}
             {{- if index .Values "longhornstorage" "enabled" }}
@@ -210,10 +210,10 @@ spec:
             {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume " -}}
           {{- end }}
         {{- end }}
-        {{- if and (index .Values "storage-smb" "enabled") (index .Values "storage-smb" "mount" "enabled") }}
+        {{- if and (index .Values "smbstorage" "enabled") (index .Values "smbstorage" "mount" "enabled") }}
         - name: smb
           persistentVolumeClaim:
-            claimName: {{ index .Values "storage-smb" "pvc" "name" | default (printf "%s-pvc-smb" .Release.Name) }}
+            claimName: {{ index .Values "smbstorage" "pvc" "name" | default (printf "%s-pvc-smb" .Release.Name) }}
         {{- end }}
         {{- if .Values.longhornstorage.enabled }}
         {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}

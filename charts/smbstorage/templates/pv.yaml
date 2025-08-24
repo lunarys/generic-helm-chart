@@ -40,8 +40,8 @@ spec:
     volumeAttributes:
       source: "//{{ .Values.smb.host }}/{{ .Values.smb.share }}"
     nodeStageSecretRef:
-      {{- if index .Values "external-secrets" "enabled" }}
-      name: {{ index .Values "external-secrets" "name" | default "smb-creds" }}
+      {{- if index .Values "externalsecrets" "enabled" }}
+      name: {{ index .Values "externalsecrets" "name" | default "smb-creds" }}
       {{- else }}
       name: {{ .Values.smb.secret.name | default "smb-creds" }}
       {{- end }}

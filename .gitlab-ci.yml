@@ -60,7 +60,7 @@ build-child:
           - "charts/externalsecrets"
           - "charts/networkpolicy"
           - "charts/longhornstorage"
-          - "charts/storage-smb"
+          - "charts/smbstorage"
           - "charts/localstorage"
           - "charts/traefik-config"
   rules:

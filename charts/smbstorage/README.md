@@ -1,4 +1,4 @@
-# storage-smb
+# smbstorage
 
 This helm chart is intended to simplify mounting SMB shares in the cluster.
 
