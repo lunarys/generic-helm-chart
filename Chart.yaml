@@ -14,5 +14,5 @@ dependencies:
     version: 0.1.0
   - name: longhornstorage
     version: 0.1.0
-  - name: storage-local
+  - name: localstorage
     version: 0.1.0

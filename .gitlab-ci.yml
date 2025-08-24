@@ -61,7 +61,7 @@ build-child:
           - "charts/networkpolicy"
           - "charts/storage-cluster"
           - "charts/storage-smb"
-          - "charts/storage-local"
+          - "charts/localstorage"
           - "charts/traefik-config"
   rules:
     - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE != "parent_pipeline"
