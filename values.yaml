@@ -351,19 +351,25 @@ storage-smb:
 
 storage-cluster:
   enabled: false
-  # -- Size of the storage cluster
-  size: ""
-  # -- Variant of the storage cluster, e.g. auto-delete or retain
-  #variant: ""
-  # -- Name of the storage cluster, if empty a name will be generated
-  #name: ""
-  # -- Set a volume name to reuse an existing volume
-  #pvName: ""
-  mount:
-    enabled: true
-    path: ""
-    subPath: ""
-    readonly: false
+  # -- Multiple PVC configuration using map with key as volume name
+  volumes:
+    example:
+      # -- Enable/disable this volume.
+      enabled: false
+      # -- Size of the storage request
+      size: ""
+      # -- Storage class variant to use (auto-delete, retain, encrypted)
+      #variant: ""
+      # -- Optional: Custom name for the PVC (defaults to {release-name}-{volume-key}-pvc)
+      #name: ""
+      # -- Optional: Bind to a specific PersistentVolume by name
+      pvName: ""
+      # -- Mount configuration for this volume
+      mount:
+        enabled: true
+        path: ""
+        subPath: ""
+        readonly: false
 
 
 # -- Settings for external-secrets integration.

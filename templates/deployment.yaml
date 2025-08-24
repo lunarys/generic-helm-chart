@@ -158,12 +158,16 @@ spec:
               subPath: {{ index .Values "storage-smb" "mount" "subPath" }}
               {{- end }}
             {{- end }}
-            {{- if and (index .Values "storage-cluster" "enabled") (index .Values "storage-cluster" "mount" "enabled") }}
-            - name: longhorn
-              mountPath: {{ index .Values "storage-cluster" "mount" "path" | required "storage-cluster.mount.path is required" }}
-              readOnly: {{ index .Values "storage-cluster" "mount" "readonly" | default false }}
-              {{- if index .Values "storage-cluster" "mount" "subPath" }}
-              subPath: {{ index .Values "storage-cluster" "mount" "subPath" }}
+            {{- if index .Values "storage-cluster" "enabled" }}
+            {{- range $volumeName, $volume := (index .Values "storage-cluster" "volumes") }}
+            {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled $volume.mount.path }}
+            - name: {{ printf "storage-cluster-%s" $volumeName }}
+              mountPath: {{ $volume.mount.path | required (printf "storage-cluster.volumes.%s.mount.path is required" $volumeName) }}
+              readOnly: {{ $volume.mount.readonly | default false }}
+              {{- if $volume.mount.subPath }}
+              subPath: {{ $volume.mount.subPath }}
+              {{- end }}
+            {{- end }}
               {{- end }}
             {{- end }}
       volumes:
@@ -211,10 +215,14 @@ spec:
           persistentVolumeClaim:
             claimName: {{ index .Values "storage-smb" "pvc" "name" | default (printf "%s-pvc-smb" .Release.Name) }}
         {{- end }}
-        {{- if and (index .Values "storage-cluster" "enabled") (index .Values "storage-cluster" "mount" "enabled") }}
-        - name: longhorn
+        {{- if index .Values "storage-cluster" "enabled" }}
+        {{- range $volumeName, $volume := (index .Values "storage-cluster" "volumes") }}
+        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled }}
+        - name: {{ printf "storage-cluster-%s" $volumeName }}
           persistentVolumeClaim:
-            claimName: {{ index .Values "storage-cluster" "pvc" "name" | default (printf "%s-longhorn-pvc" .Release.Name) }}
+            claimName: {{ $volume.name | default (printf "%s-%s-pvc" $.Release.Name $volumeName) }}
+        {{- end }}
+        {{- end }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

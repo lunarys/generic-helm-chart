@@ -6,10 +6,18 @@ templates:
 tests:
   - it: should render PVC with correct accessMode, storageClassName, and size
     set:
-      accessMode: ReadWriteOnce
-      size: 10Gi
-      variant: auto-delete
+      volumes:
+        test:
+          enabled: true
+          accessMode: ReadWriteOnce
+          size: 10Gi
+          variant: auto-delete
     asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-test-pvc
       - equal:
           path: spec.accessModes[0]
           value: ReadWriteOnce
@@ -22,24 +30,97 @@ tests:
 
   - it: should render PVC with volumeName if set
     set:
-      size: 5Gi
-      pvName: my-volume
+      volumes:
+        test:
+          enabled: true
+          size: 5Gi
+          pvName: my-volume
     asserts:
       - equal:
           path: spec.volumeName
           value: my-volume
 
+  - it: should use default accessMode and variant when not specified
+    set:
+      defaultAccessMode: ReadWriteMany
+      defaultVariant: auto-delete
+      volumes:
+        test:
+          enabled: true
+          size: 1Gi
+    asserts:
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteMany
+      - equal:
+          path: spec.storageClassName
+          value: longhorn
+
+  - it: should render PVC when enabled is not specified (volumes enabled by default)
+    set:
+      volumes:
+        test:
+          size: 1Gi
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-test-pvc
+
+  - it: should render multiple PVCs when multiple volumes are enabled
+    set:
+      volumes:
+        data:
+          enabled: true
+          size: 10Gi
+          variant: retain
+        cache:
+          enabled: true
+          size: 5Gi
+          variant: auto-delete
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should not render PVC when volume is disabled
+    set:
+      volumes:
+        test:
+          enabled: false
+          size: 1Gi
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render any PVCs when chart is disabled
+    set:
+      enabled: false
+      volumes:
+        test:
+          enabled: true
+          size: 1Gi
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: should fail if size is not set
     set:
-      variant: retain
+      volumes:
+        test:
+          enabled: true
+          variant: retain
     asserts:
       - failedTemplate:
-          errorMessage: size must be set
+          errorMessage: volumes.test.size must be set
 
   - it: should fail if storageClassVariants does not contain the variant
     set:
-      size: 1Gi
-      variant: foo
+      volumes:
+        test:
+          enabled: true
+          size: 1Gi
+          variant: foo
     asserts:
       - failedTemplate:
           errorMessage: storageClassVariants must contain the variant

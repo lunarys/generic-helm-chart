@@ -1,15 +1,33 @@
-accessMode: ReadWriteOnce
-size: ""
-variant: retain
-
+# -- Enable the storage-cluster chart
 enabled: true
-name: ""
 
-# -- Set a volume name to reuse an existing volume
-# Probably best to set the pvName here after the pv has been created, such that 
-# the pvc will wait for the pv to be available on recreation.
-pvName: ""
+# -- Default access mode to use for created PVCs.
+defaultAccessMode: ReadWriteOnce
+# -- Default variant to use for created PVCs, see `storageClassVariants`.
+defaultVariant: retain
 
+# -- Multiple PVC configuration using map with key as volume name
+# @default -- see below
+volumes:
+  example:
+    # -- Enable/disable this volume.
+    enabled: false
+    # -- Access mode for the PVC (ReadWriteOnce, ReadWriteMany, ReadOnlyMany)
+    accessMode: ReadWriteOnce
+    # -- Size of the storage request
+    size: "1Gi"
+    # -- Storage class variant to use (see storageClassVariants)
+    variant: retain
+    # -- Optional: Custom name for the PVC (defaults to {release-name}-{volume-key}-pvc)
+    name: ""
+    # -- Optional: Bind to a specific PersistentVolume by name. Can be used to block PV provisioning until it is restored from a backup.
+    pvName: ""
+
+# -- A map of available StorageClasses to use. The key can be used for `variant` to use a specific storageClass.
 storageClassVariants:
+  # -- StorageClass with reclaimPolicy `Delete`.
   auto-delete: longhorn
+  # -- StorageClass with reclaimPolicy `Retain`.
   retain: longhorn-retain
+  # -- StorageClass with reclaimPolicy `Retain` and encrypted data at rest, using the default longhorn encryption key.
+  encrypted: longhorn-encrypted

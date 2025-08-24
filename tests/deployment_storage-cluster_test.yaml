@@ -8,55 +8,62 @@ tests:
     set:
       storage-cluster:
         enabled: true
-        mount:
-          path: /cluster-data
-          readonly: true
-          subPath: "myclusterfolder"
-        pvc:
-          name: "my-cluster-pvc"
+        volumes:
+          main:
+            enabled: true
+            size: "1Gi"
+            name: "my-cluster-pvc"
+            mount:
+              enabled: true
+              path: /cluster-data
+              readonly: true
+              subPath: "myclusterfolder"
     asserts:
       - exists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")]
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].mountPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")].mountPath
           value: /cluster-data
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].readOnly
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")].readOnly
           value: true
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].subPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")].subPath
           value: myclusterfolder
       - exists:
-          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-main")]
       - equal:
-          path: spec.template.spec.volumes[?(@.name=="longhorn")].persistentVolumeClaim.claimName
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-main")].persistentVolumeClaim.claimName
           value: my-cluster-pvc
 
   - it: should render storage-cluster volumeMount and volume with correct values when enabled and subPath is not set
     set:
       storage-cluster:
         enabled: true
-        mount:
-          enabled: true
-          path: /cluster-data
-          readonly: false
-        pvc:
-          name: "my-cluster-pvc"
+        volumes:
+          main:
+            enabled: true
+            size: "1Gi"
+            name: "my-cluster-pvc"
+            mount:
+              enabled: true
+              path: /cluster-data
+              readonly: false
     asserts:
       - exists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")]
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].mountPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")].mountPath
           value: /cluster-data
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].readOnly
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")].readOnly
           value: false
       - notExists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")].subPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")].subPath
       - exists:
-          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-main")]
       - equal:
-          path: spec.template.spec.volumes[?(@.name=="longhorn")].persistentVolumeClaim.claimName
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-main")].persistentVolumeClaim.claimName
           value: my-cluster-pvc
 
   - it: should not render storage-cluster volumeMount and volume when disabled
@@ -65,23 +72,60 @@ tests:
         enabled: false
     asserts:
       - notExists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")]
       - notExists:
-          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-main")]
 
   - it: should not render storage-cluster volumeMount and volume when mount.enabled is false
     set:
       storage-cluster:
         enabled: true
-        mount:
-          enabled: false
-          path: /cluster-data
-          readonly: true
-          subPath: "myclusterfolder"
-        pvc:
-          name: "my-cluster-pvc"
+        volumes:
+          main:
+            enabled: true
+            size: "1Gi"
+            mount:
+              enabled: false
+              path: /cluster-data
+              readonly: true
+              subPath: "myclusterfolder"
     asserts:
       - notExists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-main")]
       - notExists:
-          path: spec.template.spec.volumes[?(@.name=="longhorn")]
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-main")]
+
+  - it: should render multiple storage-cluster volumes when enabled
+    set:
+      storage-cluster:
+        enabled: true
+        volumes:
+          data:
+            enabled: true
+            size: "5Gi"
+            mount:
+              enabled: true
+              path: /app/data
+              readonly: false
+          logs:
+            enabled: true
+            size: "1Gi"
+            mount:
+              enabled: true
+              path: /app/logs
+              readonly: false
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-data")]
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-data")].mountPath
+          value: /app/data
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-logs")]
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="storage-cluster-logs")].mountPath
+          value: /app/logs
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-data")]
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="storage-cluster-logs")]

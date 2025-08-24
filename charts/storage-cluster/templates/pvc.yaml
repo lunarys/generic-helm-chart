@@ -1,16 +1,21 @@
 {{- if .Values.enabled }}
+{{- range $name, $volume := .Values.volumes }}
+{{- if or (not (hasKey $volume "enabled")) $volume.enabled }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.name | default (printf "%s-longhorn-pvc" .Release.Name) }}
+  name: {{ $volume.name | default (printf "%s-%s-pvc" $.Release.Name $name) }}
 spec:
   accessModes:
-    - {{ .Values.accessMode }}
-  storageClassName: {{ index .Values.storageClassVariants .Values.variant | required "storageClassVariants must contain the variant" }}
-  {{- if .Values.pvName }}
-  volumeName: {{ .Values.pvName | quote }}
+    - {{ $volume.accessMode | default $.Values.defaultAccessMode }}
+  storageClassName: {{ index $.Values.storageClassVariants ($volume.variant | default $.Values.defaultVariant) | required "storageClassVariants must contain the variant" }}
+  {{- if $volume.pvName }}
+  volumeName: {{ $volume.pvName | quote }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.size | required "size must be set" }}
+      storage: {{ $volume.size | required (printf "volumes.%s.size must be set" $name) }}
+{{- end }}
+{{- end }}
 {{- end }}
