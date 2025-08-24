@@ -57,9 +57,9 @@ build-child:
   parallel:
     matrix:
       - HELM_CHART_DIRECTORY: 
-          - "charts/external-secrets"
+          - "charts/externalsecrets"
           - "charts/networkpolicy"
-          - "charts/storage-cluster"
+          - "charts/longhornstorage"
           - "charts/storage-smb"
           - "charts/localstorage"
           - "charts/traefik-config"
