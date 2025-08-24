@@ -11,6 +11,7 @@ defaultVariant: retain
 volumes:
   example:
     # -- Enable/disable this volume.
+    # @default -- `true`
     enabled: false
     # -- Access mode for the PVC (ReadWriteOnce, ReadWriteMany, ReadOnlyMany)
     accessMode: ReadWriteOnce
