@@ -150,16 +150,16 @@ spec:
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly | default false }}
             {{- end }}
-            {{- if and (index .Values "smbstorage" "enabled") (index .Values "smbstorage" "mount" "enabled") }}
+            {{- if and .Values.smbstorage.enabled .Values.smbstorage.mount.enabled }}
             - name: smb
-              mountPath: {{ index .Values "smbstorage" "mount" "path" | required "smbstorage.mount.path is required" }}
-              readOnly: {{ index .Values "smbstorage" "mount" "readonly" | default false }}
-              {{- if index .Values "smbstorage" "mount" "subPath" }}
-              subPath: {{ index .Values "smbstorage" "mount" "subPath" }}
+              mountPath: {{ .Values.smbstorage.mount.path | required "smbstorage.mount.path is required" }}
+              readOnly: {{ .Values.smbstorage.mount.readonly | default false }}
+              {{- if .Values.smbstorage.mount.subPath }}
+              subPath: {{ .Values.smbstorage.mount.subPath }}
               {{- end }}
             {{- end }}
-            {{- if index .Values "longhornstorage" "enabled" }}
-            {{- range $volumeName, $volume := (index .Values "longhornstorage" "volumes") }}
+            {{- if .Values.longhornstorage.enabled }}
+            {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
             {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled $volume.mount.path }}
             - name: {{ printf "longhorn-%s" $volumeName }}
               mountPath: {{ $volume.mount.path | required (printf "longhornstorage.volumes.%s.mount.path is required" $volumeName) }}
@@ -210,10 +210,10 @@ spec:
             {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume " -}}
           {{- end }}
         {{- end }}
-        {{- if and (index .Values "smbstorage" "enabled") (index .Values "smbstorage" "mount" "enabled") }}
+        {{- if and .Values.smbstorage.enabled .Values.smbstorage.mount.enabled }}
         - name: smb
           persistentVolumeClaim:
-            claimName: {{ index .Values "smbstorage" "pvc" "name" | default (printf "%s-pvc-smb" .Release.Name) }}
+            claimName: {{ .Values.smbstorage.pvc.name | default (printf "%s-pvc-smb" .Release.Name) }}
         {{- end }}
         {{- if .Values.longhornstorage.enabled }}
         {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
