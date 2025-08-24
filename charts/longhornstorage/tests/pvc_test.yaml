@@ -1,4 +1,4 @@
-suite: storage-cluster pvc
+suite: longhornstorage pvc
 
 templates:
   - templates/pvc.yaml

@@ -349,7 +349,7 @@ storage-smb:
     # -- SubPath for mounting
     subPath: ""
 
-storage-cluster:
+longhornstorage:
   enabled: false
   # -- Multiple PVC configuration using map with key as volume name
   volumes:

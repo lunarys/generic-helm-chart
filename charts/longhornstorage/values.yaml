@@ -1,4 +1,4 @@
-# -- Enable the storage-cluster chart
+# -- Enable the longhornstorage chart
 enabled: true
 
 # -- Default access mode to use for created PVCs.

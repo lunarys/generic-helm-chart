@@ -158,11 +158,11 @@ spec:
               subPath: {{ index .Values "storage-smb" "mount" "subPath" }}
               {{- end }}
             {{- end }}
-            {{- if index .Values "storage-cluster" "enabled" }}
-            {{- range $volumeName, $volume := (index .Values "storage-cluster" "volumes") }}
+            {{- if index .Values "longhornstorage" "enabled" }}
+            {{- range $volumeName, $volume := (index .Values "longhornstorage" "volumes") }}
             {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled $volume.mount.path }}
-            - name: {{ printf "storage-cluster-%s" $volumeName }}
-              mountPath: {{ $volume.mount.path | required (printf "storage-cluster.volumes.%s.mount.path is required" $volumeName) }}
+            - name: {{ printf "longhorn-%s" $volumeName }}
+              mountPath: {{ $volume.mount.path | required (printf "longhornstorage.volumes.%s.mount.path is required" $volumeName) }}
               readOnly: {{ $volume.mount.readonly | default false }}
               {{- if $volume.mount.subPath }}
               subPath: {{ $volume.mount.subPath }}
@@ -215,10 +215,10 @@ spec:
           persistentVolumeClaim:
             claimName: {{ index .Values "storage-smb" "pvc" "name" | default (printf "%s-pvc-smb" .Release.Name) }}
         {{- end }}
-        {{- if index .Values "storage-cluster" "enabled" }}
-        {{- range $volumeName, $volume := (index .Values "storage-cluster" "volumes") }}
+        {{- if .Values.longhornstorage.enabled }}
+        {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
         {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled }}
-        - name: {{ printf "storage-cluster-%s" $volumeName }}
+        - name: {{ printf "longhorn-%s" $volumeName }}
           persistentVolumeClaim:
             claimName: {{ $volume.name | default (printf "%s-%s-pvc" $.Release.Name $volumeName) }}
         {{- end }}

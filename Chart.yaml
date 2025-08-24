@@ -12,7 +12,7 @@ dependencies:
     version: 0.1.0
   - name: networkpolicy
     version: 0.1.0
-  - name: storage-cluster
+  - name: longhornstorage
     version: 0.1.0
   - name: storage-local
     version: 0.1.0
