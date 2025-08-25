@@ -102,6 +102,7 @@ containerSecurityContextPreset:
 
 
 # -- General ingress settings
+# TODO: rename this and the subchart to ingress or ingressconfig, to get rid of the duplicate settings
 ingress:
   enabled: true
   className: ""
@@ -122,7 +123,7 @@ ingress:
     externalAccessAllowed: false
     # -- Internal access allowlist name, deployed separately and centrally.
     # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
-    internalAccessAllowListName: "settings-traefik-internal-access-allowlist@kubernetescrd"
+    internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
 
   # -- Custom annotations for the ingress
   annotations: {}
