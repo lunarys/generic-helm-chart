@@ -160,7 +160,7 @@ spec:
             {{- end }}
             {{- if .Values.longhornstorage.enabled }}
             {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
-            {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled $volume.mount.path }}
+            {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
             - name: {{ printf "longhorn-%s" $volumeName }}
               mountPath: {{ $volume.mount.path | required (printf "longhornstorage.volumes.%s.mount.path is required" $volumeName) }}
               readOnly: {{ $volume.mount.readonly | default false }}
@@ -217,7 +217,7 @@ spec:
         {{- end }}
         {{- if .Values.longhornstorage.enabled }}
         {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
-        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.enabled }}
+        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
         - name: {{ printf "longhorn-%s" $volumeName }}
           persistentVolumeClaim:
             claimName: {{ $volume.name | default (printf "%s-%s-pvc" $.Release.Name $volumeName) }}
