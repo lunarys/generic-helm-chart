@@ -350,7 +350,7 @@ smbstorage:
     subPath: ""
 
 longhornstorage:
-  enabled: false
+  enabled: true
   # -- Multiple PVC configuration using map with key as volume name
   volumes:
     example:
