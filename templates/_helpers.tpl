@@ -219,7 +219,7 @@ true
 
 {{- define "ju-common.containerSecurityContext" -}}
 {{- if .Values.containerSecurityContext -}}
-{{ tpl ( .Values.containerSecurityContext) . }}
+{{ tpl (toYaml .Values.containerSecurityContext) . }}
 {{- else if .Values.useContainerSecurityContextPreset -}}
 {{ tpl (toYaml .Values.containerSecurityContextPreset) . }}
 {{- else -}}
