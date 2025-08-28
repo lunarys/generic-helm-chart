@@ -3,7 +3,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Values.ingress.name | default .Release.Name | quote }}
   annotations:
     {{- include "ju-common.ingress.middlewares" . | indent 4 }}
     {{- with .Values.ingress.annotations -}}
@@ -19,7 +19,7 @@ spec:
         paths:
           - backend:
               service:
-                name: {{ .Values.service.name }}
+                name: {{ include "ju-common.serviceName" . }}
                 port:
                   number: {{ .Values.service.targetPort | default .Values.service.port | int }}
             path: {{ .Values.ingress.path }}
@@ -30,7 +30,7 @@ spec:
         paths:
           - backend:
               service:
-                name: {{ .Values.service.name }}
+                name: {{ include "ju-common.serviceName" . }}
                 port:
                   number: {{ .Values.service.targetPort | default .Values.service.port | int }}
             path: {{ .Values.ingress.path }}

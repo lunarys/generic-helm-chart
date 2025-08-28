@@ -74,7 +74,7 @@ Ingress path helper
 Source of truth for the service name
 */}}
 {{- define "ju-common.serviceName" -}}
-{{ include "ju-common.fullname" . }}
+{{ .Values.service.name | default (include "ju-common.fullname" .) }}
 {{- end }}
 
 

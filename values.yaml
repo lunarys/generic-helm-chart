@@ -106,6 +106,8 @@ ingress:
   enabled: true
   className: ""
 
+  name: ""
+
   host: ""
   path: /
   pathType: Prefix
@@ -133,7 +135,7 @@ ingress:
 service:
   enabled: true
   type: ClusterIP
-  name: "{{ .Release.Name }}"
+  name: ""
   # -- default port where the ingress routes the traffic to the service
   port: 80
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)
