@@ -1,2 +1,39 @@
-{{/* From traefik-config subchart */}}
-{{ template "ju.ingress" . }}
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}
+  annotations:
+    {{- include "ju-common.ingress.middlewares" . | indent 4 }}
+    {{- with .Values.ingress.annotations -}}
+    {{-   toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ include "ju-common.ingress.internalHost" . }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ .Values.service.name }}
+                port:
+                  number: {{ .Values.service.targetPort | default .Values.service.port | int }}
+            path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
+    {{- if and .Values.ingress.accessControl.externalAccessAllowed (ne (include "ju-common.ingress.externalHost" .) (include "ju-common.ingress.internalHost" .)) }}
+    - host: {{ include "ju-common.ingress.externalHost" . }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ .Values.service.name }}
+                port:
+                  number: {{ .Values.service.targetPort | default .Values.service.port | int }}
+            path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
+    {{- end }}
+{{- end }}

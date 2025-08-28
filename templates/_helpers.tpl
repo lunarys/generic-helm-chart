@@ -7,6 +7,33 @@
 {{- end }}
 
 {{/*
+Ingress middleware annotations (simplified - middleware functionality removed)
+*/}}
+{{- define "ju-common.ingress.middlewares" -}}
+{{- $middlewares := list }}
+{{- if not .Values.ingress.accessControl.externalAccessAllowed }}
+  {{- $middlewares = append $middlewares .Values.ingress.accessControl.internalAccessAllowListName }}
+{{- end }}
+{{- if $middlewares }}
+traefik.ingress.kubernetes.io/router.middlewares: {{ join "," $middlewares | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Ingress external host
+*/}}
+{{- define "ju-common.ingress.externalHost" -}}
+{{- coalesce .Values.ingress.accessControl.externalHost .Values.ingress.host .Values.global.ingress.host -}}
+{{- end }}
+
+{{/*
+Ingress internal host
+*/}}
+{{- define "ju-common.ingress.internalHost" -}}
+{{- coalesce .Values.ingress.accessControl.internalHost .Values.ingress.host .Values.global.ingress.host -}}
+{{- end }}
+
+{{/*
 
 */}}
 {{- define "ju-backend.isCustomizedServiceAccount" -}}

@@ -102,7 +102,6 @@ containerSecurityContextPreset:
 
 
 # -- General ingress settings
-# TODO: rename this and the subchart to ingress or ingressconfig, to get rid of the duplicate settings
 ingress:
   enabled: true
   className: ""
@@ -127,14 +126,6 @@ ingress:
 
   # -- Custom annotations for the ingress
   annotations: {}
-
-
-# -- Mirrored from traefik-config chart
-traefik-config:
-  ingress:
-    enabled: false
-  middleware:
-    enabled: false
 
 
 # -- definition for the deployed kubernetes service
