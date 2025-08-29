@@ -141,6 +141,7 @@ service:
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)
   targetPort: 8080
   externalIPs: []
+  #ipFamilyPolicy: PreferDualStack
 
 # -- Additional Kubernetes services configuration.
 # This allows you to define extra services besides the default one.
@@ -163,6 +164,7 @@ services:
         targetPort: 8080
     # -- List of external IPs for the service.
     externalIPs: []
+    #ipFamilyPolicy: PreferDualStack
 
 
 # -- configuration for the liveness probe. By default, the liveness probe is executed against `{{ .Values.actuator.port }}/{{ .Values.actuator.basePath }}/{{ .Values.actuator.contextPath }}/health/liveness`
