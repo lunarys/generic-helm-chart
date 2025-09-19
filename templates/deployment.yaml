@@ -101,6 +101,19 @@ spec:
           {{- if .Values.service.enabled }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+              name: default
+              protocol: {{ .Values.service.protocol }}
+            {{- range $name, $service := .Values.services }}
+              {{- if $service.enabled }}
+                {{- range $portName, $port := $service.ports }}
+                  {{- if or (not (hasKey $port "enabled")) $port.enabled }}
+            - containerPort: {{ $port.targetPort }}
+              name: {{ printf "%s-%s" $name $portName }}
+              protocol: {{ $port.protocol | default "TCP" }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
           {{- end }}
           #config values that comes from the configmap 
           envFrom:
