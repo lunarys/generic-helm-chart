@@ -6,7 +6,7 @@ name: ""
 
 defaults:
   # -- Default CIDR for local subnet isolation
-  localSubnetCidr: 10.0.0.0/22
+  localSubnetCidr: 10.0.0.0/20
   # -- Ingress controller namespace to allow traffic from
   ingressControllerNamespace: traefik
 
