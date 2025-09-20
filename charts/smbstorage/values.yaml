@@ -1,89 +1,121 @@
-# variants:
-#   - storageclass: storageclass + pvc (static: false)
-#   - pv: pv + pvc (static: true)
-#   - pvc with existing (external) pv? -> maybe storageclass is better?
-#   - pvc with existing (external) storageclass
-#   - ephemeral? https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes
+# This chart creates PersistentVolume and PersistentVolumeClaim resources for SMB storage.
+# It is only used to mount smb shares into containers, not dynamically provision storage on a smb share.
+
+# - pv: pv + pvc (static provisioning)
+# - pvc with existing (external) pv
+# - ephemeral volumes: https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#generic-ephemeral-volumes
 
 # TODO: capacity is required
 
 # -- Enable or disable the chart
 enabled: true
 
-# -- Provisioning variant: "pv" (static, default) or "storageclass" (dynamic)
-# See https://github.com/kubernetes-csi/csi-driver-smb/blob/master/deploy/example/e2e_usage.md
-# TODO: storageclass is not yet fully implemented
-variant: pv
+# -- Multiple SMB volumes configuration (map with volume name as key)
+volumes: 
+  # Example volume configuration (disabled by default, usually volumes enabled by default when specified)
+  example:
+    # -- Enable or disable this specific volume
+    # @default -- `true`
+    enabled: false  # Set to true to enable this volume (defaults to true when not specified)
+    smb:
+      # -- SMB server hostname or IP
+      host: "smb-server.example.com"
+      # -- SMB share name
+      share: "data"
+      # -- Total available capacity for the share (e.g., 50Gi)
+      # Currently (2025-09-20) not enforced by the smb provisioner, but required to be set.
+      capacity: "50Gi"
+      # -- Alternatively, specify the full SMB source URI
+      #source: "//smb-server.example.com/data"
+    mount:
+      # -- Requested capacity for the PVC. Defaults to `smb.capacity`.
+      capacity: ""
+      # -- Directory mode for mounted volume.
+      # This is the mount mode for directories inside the container.
+      # The directories should be usable by the user/group in the container.
+      # @default -- `0770`
+      dir_mode: ""
+      # -- File mode for mounted volume.
+      # This is the mount mode for files inside the container.
+      # The files should be usable by the user/group in the container.
+      # @default -- `0660`
+      file_mode: ""
+      # -- UID for mounted volume inside the container.
+      # Uses root (0) by default.
+      uid: ""
+      # -- GID for mounted volume inside the container.
+      # Uses `fsGroup` from `securityContext` by default, if set, otherwise uses root (0) as default.
+      gid: ""
+      # -- Mount as read-only
+      readonly: false
+      # -- Additional mount options
+      extraOptions: []
+    pv:
+      # -- Enable PersistentVolume creation
+      enabled: true
+      # -- Name of the PersistentVolume (auto-generated if empty)
+      name: ""  # Auto-generated: {release-name}-{volume-key}-pv-smb
+    pvc:
+      # -- Enable PersistentVolumeClaim creation
+      enabled: true
+      # -- Name of the PersistentVolumeClaim (auto-generated if empty)
+      name: ""  # Auto-generated: {release-name}-{volume-key}-pvc-smb
+    secret:
+      # -- Create Kubernetes Secret with SMB credentials
+      enabled: false
+      # -- Name of the Secret (auto-generated if empty)
+      name: ""  # Auto-generated: {release-name}-{volume-key}-smb-creds
+      # -- Namespace for the Secret (defaults to release namespace)
+      namespace: ""
+      # -- SMB username
+      user: "username"
+      # -- SMB password
+      password: "password"
+      # -- SMB domain
+      domain: "WORKGROUP"
+    externalsecret:
+      # -- Use ExternalSecrets to create SMB credentials Secret
+      enabled: true
+      # -- Name of the ExternalSecret (auto-generated if empty)
+      name: ""  # Auto-generated: {release-name}-{volume-key}-smb-creds
+      # -- Common remote key prefix for credentials
+      commonRemoteKey: "smb/data"
+      # -- Field mappings for ExternalSecrets
+      # @default -- see `externalsecretFieldsDefault`
+      fields:
+        username:
+          # -- External secret store reference name
+          storeRefName: bitwarden-login
+          # -- Property name in the external secret
+          remoteProperty: username
+        password:
+          storeRefName: bitwarden-login
+          remoteProperty: password
+        domain:
+          # -- Static value for domain
+          static: "WORKGROUP"
 
-pv:
-  enabled: true
-  # -- Name of the PersistentVolume (if using static provisioning)
-  name: ""
-
-pvc:
-  enabled: true
-  # -- Name of the PersistentVolumeClaim
-  name: ""
-
-# -- Only relevant for dynamic provisioning via StorageClass (variant: "storageclass")
-storageclass:
-  enabled: true
-  # -- Name of the StorageClass
-  name: ""
-
-# -- Use the externalsecrets helper chart to create the SMB credentials Secret
-externalsecrets:
-  enabled: false
-  name: "smb-creds"
-  commonRemoteKey: ""
-  fields:
-    username:
-      storeRefName: bitwarden-login
-      remoteProperty: username
-    password:
-      storeRefName: bitwarden-login
-      remoteProperty: password
-    domain:
-      static: "WORKGROUP"
-
-
-# -- Settings for the smb share
-smb:
-  # -- SMB server hostname or IP
-  host: "erolas.elda"
-  # -- SMB share name
-  share: "test"
-  # -- Alternatively, specify the full SMB source URI
-  #source: "//erolas.elda/test"
-  # -- Total available capacity for the share (e.g., 10Gi)
-  capacity: "10Gi"
-  secret:
+  # -- Default smb-share I use to provide files that should be copies to another volume on container init.
+  # Is handled specifically in the mount of the initContainer of the generic-service wrapper chart.
+  init-default:
     enabled: false
-    # -- Name of the Secret containing SMB credentials (if using existing Secret)
-    name: "smb-creds"
-    # -- Namespace for the Secret
-    namespace: ""
-    # -- SMB username (if creating Secret)
-    user:
-    # -- SMB password (if creating Secret)
-    password:
-    # -- SMB domain (optional)
-    domain: "WORKGROUP"
+    smb:
+      host: erolas.elda
+      share: tmp
+      capacity: "10Gi"
+    externalsecret:
+      commonRemoteKey: "todo"
 
 
-# -- Mount options for the SMB share (need to be implemented by the wrapper chart)
-mount:
-  # -- Directory mode for mounted volume
-  dir_mode: "0777"
-  # -- File mode for mounted volume
-  file_mode: "0777"
-  # -- UID for mounted volume
-  uid: "1001"
-  # -- GID for mounted volume
-  gid: "1001"
-  # -- Mount as read-only
-  readonly: false
-  # -- Requested capacity for the PVC
-  capacity: "10Gi"
-  # -- Additional mount options
-  extraOptions: []
+# Default to be used when fields for externalsecret are not defined.
+# Assuming it will most use this structure.
+# @default -- see below
+externalsecretFieldDefault:
+  username:
+    storeRefName: bitwarden-login
+    remoteProperty: username
+  password:
+    storeRefName: bitwarden-login
+    remoteProperty: password
+  domain:
+    static: "WORKGROUP"

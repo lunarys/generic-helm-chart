@@ -85,5 +85,10 @@ affinity: {}
 
 initCopy:
   enabled: true
-  fromVolume: smb
+  #fromVolume: smb
   toVolume: longhorn
+
+smbstorage:
+  volumes:
+    init-default:
+      enabled: true

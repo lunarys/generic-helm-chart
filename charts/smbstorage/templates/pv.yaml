@@ -1,50 +1,67 @@
-{{- if and .Values.enabled (eq .Values.variant "pv") .Values.pv.enabled }}
+{{- if .Values.enabled }}
+{{- range $name, $volume := .Values.volumes }}
+{{- if (or (not (hasKey $volume "enabled")) $volume.enabled) }}
+{{- $pvEnabled := true }}
+{{- if hasKey $volume "pv" }}{{ $pvEnabled = (or (not (hasKey $volume.pv "enabled")) $volume.pv.enabled) }}{{ end }}
+{{- if $pvEnabled }}
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Values.pv.name | default (printf "%s-pv-smb" .Release.Name) | quote }}
+  name: {{ include "smbstorage.pvName" (dict "volume" $volume "volumeName" $name "Release" $.Release) | quote }}
   annotations:
     pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
 spec:
-  {{- if .Values.smb.capacity }}
   capacity:
-    storage: {{ .Values.smb.capacity }}
-  {{- end }}
+    storage: {{ $volume.smb.capacity | required (printf "PV capacity is required: smb.capacity must be specified for volume '%s'" $name) }}
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete  # available values: Delete, Retain
   # empty to disable dynamic provisioning via storageclass
   storageClassName: ""
-  {{- if .Values.pvc.enabled }}
+  {{- $pvcEnabled := true }}
+  {{- if hasKey $volume "pvc" }}{{ $pvcEnabled = $volume.pvc.enabled }}{{ end }}
+  {{- if $pvcEnabled }}
   claimRef:
-    name: {{ .Values.pvc.name | default (printf "%s-pvc-smb" .Release.Name) | quote }}
-    namespace: {{ .Release.Namespace | quote }}
+    name: {{ include "smbstorage.pvcName" (dict "volume" $volume "volumeName" $name "Release" $.Release) | quote }}
+    namespace: {{ $.Release.Namespace | quote }}
   {{- end }}
   mountOptions:
-    - dir_mode={{ .Values.mount.dir_mode }}
-    - file_mode={{ .Values.mount.file_mode }}
-    - uid={{ .Values.mount.uid }}
-    - gid={{ .Values.mount.gid }}
+    {{- $mount := $volume.mount | default dict }}
+    - dir_mode={{ $mount.dir_mode | default "0770" }}
+    - file_mode={{ $mount.file_mode | default "0660" }}
+    {{- if $mount.uid }}
+    - uid={{ $mount.uid }}
+    {{- end }}
+    {{- if $mount.gid }}
+    - gid={{ $mount.gid }}
+    {{- end }}
+    {{- if $mount.readonly }}
+    - ro
+    {{- end }}
     - noperm
     - mfsymlinks
     - cache=strict
-    - noserverino  # required to prevent data corruption
-    {{- range .Values.mount.extraOptions }}
+    {{- if $mount.extraOptions }}
+    {{- range $mount.extraOptions }}
     - {{ . }}
     {{- end }}
+    {{- end }}
+    - noserverino  # required to prevent data corruption
   csi:
     driver: smb.csi.k8s.io
     # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
     # make sure this value is unique for every share in the cluster
-    volumeHandle: "{{ .Values.smb.host }}/{{ .Values.smb.share }}##"
+    volumeHandle: "{{ $volume.smb.host }}/{{ $volume.smb.share }}##"
     volumeAttributes:
-      source: "//{{ .Values.smb.host }}/{{ .Values.smb.share }}"
+      source: {{ include "smbstorage.smbSource" (dict "volume" $volume) | quote }}
     nodeStageSecretRef:
-      {{- if .Values.externalsecrets.enabled }}
-      name: {{ .Values.externalsecrets.name | default "smb-creds" }}
-      {{- else }}
-      name: {{ .Values.smb.secret.name | default "smb-creds" }}
-      {{- end }}
-      namespace: "{{ .Values.smb.secret.namespace | default .Release.Namespace }}"
+      name: {{ include "smbstorage.secretName" (dict "volume" $volume "volumeName" $name "Release" $.Release) | quote }}
+      {{- $secretNamespace := $.Release.Namespace }}
+      {{- if and $volume.secret $volume.secret.namespace }}{{ $secretNamespace = $volume.secret.namespace }}{{ end }}
+      namespace: {{ $secretNamespace | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 

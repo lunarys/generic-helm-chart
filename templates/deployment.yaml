@@ -163,13 +163,17 @@ spec:
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly | default false }}
             {{- end }}
-            {{- if and .Values.smbstorage.enabled .Values.smbstorage.mount.enabled }}
-            - name: smb
-              mountPath: {{ .Values.smbstorage.mount.path | required "smbstorage.mount.path is required" }}
-              readOnly: {{ .Values.smbstorage.mount.readonly | default false }}
-              {{- if .Values.smbstorage.mount.subPath }}
-              subPath: {{ .Values.smbstorage.mount.subPath }}
+            {{- if .Values.smbstorage.enabled }}
+            {{- range $volumeName, $volume := .Values.smbstorage.volumes }}
+            {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
+            - name: {{ printf "smb-%s" $volumeName }}
+              mountPath: {{ $volume.mount.path }}
+              readOnly: {{ $volume.mount.readonly | default false }}
+              {{- if $volume.mount.subPath }}
+              subPath: {{ $volume.mount.subPath }}
               {{- end }}
+            {{- end }}
+            {{- end }}
             {{- end }}
             {{- if .Values.longhornstorage.enabled }}
             {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
@@ -223,10 +227,14 @@ spec:
             {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume " -}}
           {{- end }}
         {{- end }}
-        {{- if and .Values.smbstorage.enabled .Values.smbstorage.mount.enabled }}
-        - name: smb
+        {{- if .Values.smbstorage.enabled }}
+        {{- range $volumeName, $volume := .Values.smbstorage.volumes }}
+        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) (or (not (hasKey $volume "mount")) (not (hasKey $volume.mount "enabled")) (ne $volume.mount.enabled false)) }}
+        - name: {{ printf "smb-%s" $volumeName }}
           persistentVolumeClaim:
-            claimName: {{ .Values.smbstorage.pvc.name | default (printf "%s-pvc-smb" .Release.Name) }}
+            claimName: {{ (($volume.pvc).name) | default (printf "%s-%s-pvc-smb" $.Release.Name $volumeName) }}
+        {{- end }}
+        {{- end }}
         {{- end }}
         {{- if .Values.longhornstorage.enabled }}
         {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
@@ -270,7 +278,13 @@ spec:
               cp -a /from/. /to/.
             {{- end }}
           volumeMounts:
-            - name: {{ .Values.initCopy.fromVolume | required "initCopy.fromVolume must be set" }}
+            {{- if .Values.initCopy.fromVolume }}
+            - name: {{ .Values.initCopy.fromVolume }}
+            {{- else if index .Values.smbstorage.volumes "init-default" "enabled" }}
+            - name: "smb-init-default"
+            {{- else }}
+              {{ fail "initCopy.fromVolume must be set or smbstorage.volumes.init-default.enabled" }}
+            {{- end }}
               mountPath: /from
               readOnly: true
             - name: {{ .Values.initCopy.toVolume | required "initCopy.toVolume must be set" }}

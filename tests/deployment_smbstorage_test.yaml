@@ -8,55 +8,61 @@ tests:
     set:
       smbstorage:
         enabled: true
-        mount:
-          path: /data
-          readonly: true
-          subPath: "myfolder"
-        pvc:
-          name: "my-smb-pvc"
+        volumes:
+          testdata:
+            enabled: true
+            mount:
+              path: /data
+              readonly: true
+              subPath: "myfolder"
+            pvc:
+              name: "my-smb-pvc"
     asserts:
       - exists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")].mountPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].mountPath
           value: /data
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")].readOnly
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].readOnly
           value: true
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")].subPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].subPath
           value: myfolder
       - exists:
-          path: spec.template.spec.volumes[?(@.name=="smb")]
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
       - equal:
-          path: spec.template.spec.volumes[?(@.name=="smb")].persistentVolumeClaim.claimName
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")].persistentVolumeClaim.claimName
           value: my-smb-pvc
 
   - it: should render SMB volumeMount and volume with correct values when enabled and subPath is not set
     set:
       smbstorage:
         enabled: true
-        mount:
-          enabled: true
-          path: /data
-          readonly: false
-        pvc:
-          name: "my-smb-pvc"
+        volumes:
+          testdata:
+            enabled: true
+            mount:
+              enabled: true
+              path: /data
+              readonly: false
+            pvc:
+              name: "my-smb-pvc"
     asserts:
       - exists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")].mountPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].mountPath
           value: /data
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")].readOnly
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].readOnly
           value: false
       - notExists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")].subPath
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].subPath
       - exists:
-          path: spec.template.spec.volumes[?(@.name=="smb")]
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
       - equal:
-          path: spec.template.spec.volumes[?(@.name=="smb")].persistentVolumeClaim.claimName
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")].persistentVolumeClaim.claimName
           value: my-smb-pvc
 
   - it: should not render SMB volumeMount and volume when disabled
@@ -65,23 +71,105 @@ tests:
         enabled: false
     asserts:
       - notExists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
       - notExists:
-          path: spec.template.spec.volumes[?(@.name=="smb")]
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
 
-  - it: should not render SMB volumeMount and volume when mount.enabled is false
+  - it: should not render SMB volumeMount and volume when mount.enabled is disabled
     set:
       smbstorage:
         enabled: true
-        mount:
-          enabled: false
-          path: /data
-          readonly: true
-          subPath: "myfolder"
-        pvc:
-          name: "my-smb-pvc"
+        volumes:
+          testdata:
+            enabled: true
+            mount:
+              enabled: false
+              path: /data
+              readonly: true
+              subPath: "myfolder"
+            pvc:
+              name: "my-smb-pvc"
     asserts:
       - notExists:
-          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb")]
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
       - notExists:
-          path: spec.template.spec.volumes[?(@.name=="smb")]
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
+
+  - it: should not render SMB volumeMount when mount.enabled is not set, but volume should be rendered
+    set:
+      smbstorage:
+        enabled: true
+        volumes:
+          testdata:
+            enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
+
+  - it: should render multiple SMB volumes when multiple volumes are configured
+    set:
+      smbstorage:
+        enabled: true
+        volumes:
+          testdata:
+            enabled: true
+            mount:
+              path: /data
+              readonly: false
+            pvc:
+              name: "testdata-pvc"
+          backup:
+            enabled: true
+            mount:
+              path: /backup
+              readonly: true
+            pvc:
+              name: "backup-pvc"
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-backup")]
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="smb-backup")]
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")].mountPath
+          value: /data
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-backup")].mountPath
+          value: /backup
+
+  - it: should enable volumes by default when enabled field is not specified
+    set:
+      smbstorage:
+        enabled: true
+        volumes:
+          testdata:
+            mount:
+              path: /data
+            pvc:
+              name: "my-smb-pvc"
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
+
+  - it: should not render volumeMount when mount path is missing but volume should exist
+    set:
+      smbstorage:
+        enabled: true
+        volumes:
+          testdata:
+            enabled: true
+            pvc:
+              name: "my-smb-pvc"
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
+      - exists:
+          path: spec.template.spec.volumes[?(@.name=="smb-testdata")]

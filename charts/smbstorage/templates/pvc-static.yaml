@@ -1,30 +1,32 @@
-{{- if and .Values.enabled .Values.pvc.enabled }}
+{{- if .Values.enabled }}
+{{- range $name, $volume := .Values.volumes }}
+{{- if (or (not (hasKey $volume "enabled")) $volume.enabled) }}
+{{- $pvcEnabled := true }}
+{{- if hasKey $volume "pvc" }}{{ $pvcEnabled = (or (not (hasKey $volume.pvc "enabled")) $volume.pvc.enabled) }}{{ end }}
+{{- if $pvcEnabled }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.pvc.name | default (printf "%s-pvc-smb" .Release.Name) | quote }}
+  name: {{ include "smbstorage.pvcName" (dict "volume" $volume "volumeName" $name "Release" $.Release) | quote }}
 spec:
   accessModes:
     - ReadWriteMany
-  {{- if .Values.mount.capacity }}
+  {{- $mount := $volume.mount | default dict }}
+  {{- $capacity := coalesce $mount.capacity $volume.smb.capacity }}
   resources:
     requests:
-      storage: {{ .Values.mount.capacity }}
+      storage: {{ $capacity | required (printf "PVC capacity is required: either mount.capacity or smb.capacity must be specified for volume '%s'" $name) }}
+  {{- $pvEnabled := true }}
+  {{- if hasKey $volume "pv" }}{{ $pvEnabled = $volume.pv.enabled }}{{ end }}
+  {{- if and (not $pvEnabled) (not (and $volume.pv $volume.pv.name)) }}
+    {{- fail "pv.name for external pv is not set" }}
   {{- end }}
-  {{- if eq .Values.variant "pv" }}
-    {{- if and (not .Values.pv.enabled) (not .Values.pv.name) }}
-      {{- fail "pv.name for external pv is not set" }}
-    {{- end }}
   # empty to disable dynamic provisioning via storageclass
-  volumeName: {{ .Values.pv.name | default (printf "%s-pv-smb" .Release.Name) | quote }}
+  volumeName: {{ include "smbstorage.pvName" (dict "volume" $volume "volumeName" $name "Release" $.Release) | quote }}
   storageClassName: ""
-  {{- else if eq .Values.variant "storageclass" }}
-    {{- if and (not .Values.storageclass.enabled) (not .Values.storageclass.name) }}
-      {{- fail "storageclass.name for external StorageClass is not set" }}
-    {{- end }}
-  storageClassName: {{ .Values.storageclass.name | default (printf "%s-storageclass-%s" .Release.Name .Values.smb.share) | quote }}
-  {{- else }}
-    {{- fail "Variant is neither pv nor storageclass" }}
-  {{- end }}
-{{ end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 

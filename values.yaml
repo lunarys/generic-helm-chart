@@ -339,12 +339,24 @@ localstorage:
   enabled: false
 
 smbstorage:
-  enabled: false
-  mount:
-    enabled: true
-    path: ""
-    # -- SubPath for mounting
-    subPath: ""
+  enabled: true
+  # -- Multiple SMB volumes configuration (map with volume name as key)
+  volumes:
+    example:
+      # -- Enable or disable this specific volume
+      enabled: false
+      mount:
+        # -- Enable mounting this volume in the container
+        enabled: true
+        # -- Mount path in the container
+        path: ""
+        # -- SubPath for mounting
+        subPath: ""
+        # -- Mount as read-only
+        readonly: false
+    init-default:
+      enabled: false
+
 
 longhornstorage:
   enabled: true

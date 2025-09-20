@@ -1,0 +1,213 @@
+suite: smbstorage PersistentVolume
+
+templates:
+  - templates/pv.yaml
+
+tests:
+  - it: should render PV with minimal configuration (testing documented defaults)
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PersistentVolume
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-testdata-pv-smb
+      - equal:
+          path: spec.capacity.storage
+          value: "10Gi"
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteMany
+      - equal:
+          path: spec.persistentVolumeReclaimPolicy
+          value: Delete
+      - equal:
+          path: spec.storageClassName
+          value: ""
+      - equal:
+          path: spec.claimRef.name
+          value: RELEASE-NAME-testdata-pvc-smb
+      - equal:
+          path: spec.claimRef.namespace
+          value: NAMESPACE
+      - equal:
+          path: spec.csi.driver
+          value: smb.csi.k8s.io
+      - equal:
+          path: spec.csi.volumeHandle
+          value: "test-server.example.com/testshare##"
+      - equal:
+          path: spec.csi.volumeAttributes.source
+          value: "//test-server.example.com/testshare"
+      - equal:
+          path: spec.csi.nodeStageSecretRef.name
+          value: RELEASE-NAME-testdata-smb-creds
+      # Validate documented defaults for mount options
+      - contains:
+          path: spec.mountOptions
+          content: "dir_mode=0770"
+      - contains:
+          path: spec.mountOptions
+          content: "file_mode=0660"
+
+  - it: should render PV respecting pv.enabled default (true as documented)
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+          # pv.enabled defaults to true according to values.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PersistentVolume
+
+  - it: should not render PV when volume.enabled is explicitly false
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          enabled: false  # Explicitly disabled as documented
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render PV when pv.enabled is explicitly false
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+          pv:
+            enabled: false  # Override default true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render PV with readonly mount option when mount.readonly is true
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+          mount:
+            readonly: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.mountOptions
+          content: "ro"
+
+  - it: should render PV with extraOptions as documented
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+          mount:
+            extraOptions:
+              - "custom-option=value"
+              - "another-option"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.mountOptions
+          content: "custom-option=value"
+      - contains:
+          path: spec.mountOptions
+          content: "another-option"
+
+  - it: should use auto-generated PV name format as documented when name is empty
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+          pv:
+            name: ""  # Empty means auto-generated as documented
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-testdata-pv-smb  # Format: {release-name}-{volume-key}-pv-smb
+
+  - it: should use custom PV name when specified as documented
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+          pv:
+            name: "custom-pv-name"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: "custom-pv-name"
+
+  - it: should not render PV when chart is disabled
+    set:
+      enabled: false
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "10Gi"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should use PVC capacity defaulting to smb.capacity as documented
+    set:
+      enabled: true
+      volumes:
+        testdata:
+          smb:
+            host: "test-server.example.com"
+            share: "testshare"
+            capacity: "50Gi"
+          mount:
+            capacity: ""  # Empty means defaults to smb.capacity as documented
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.claimRef.name
+          value: RELEASE-NAME-testdata-pvc-smb
