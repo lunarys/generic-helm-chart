@@ -105,6 +105,9 @@ volumes:
       host: erolas.elda
       share: "k8s-prod-init"
       capacity: "10Gi"
+    mount:
+      # does not need to be mounted by the main container, only the initContainer
+      enabled: false
     externalsecret:
       # bitwarden secret containing user and password for the smb share
       # for test user k8s-test-init with remote key "33df0a50-c169-4242-97c2-b33b00dbe4ca"
