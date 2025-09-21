@@ -92,7 +92,7 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.containers[0].volumeMounts[?(@.name=="longhorn-main")]
-      - notExists:
+      - exists:
           path: spec.template.spec.volumes[?(@.name=="longhorn-main")]
 
   - it: should render multiple longhornstorage volumes when enabled

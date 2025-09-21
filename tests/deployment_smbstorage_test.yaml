@@ -92,7 +92,7 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.containers[0].volumeMounts[?(@.name=="smb-testdata")]
-      - notExists:
+      - exists:
           path: spec.template.spec.volumes[?(@.name=="smb-testdata")]
 
   - it: should not render SMB volumeMount when mount.enabled is not set, but volume should be rendered
