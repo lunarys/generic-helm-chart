@@ -33,9 +33,7 @@ spec:
     {{- if $mount.uid }}
     - uid={{ $mount.uid }}
     {{- end }}
-    {{- if $mount.gid }}
-    - gid={{ $mount.gid }}
-    {{- end }}
+    - gid={{ $mount.gid | default 2000 }}
     {{- if $mount.readonly }}
     - ro
     {{- end }}

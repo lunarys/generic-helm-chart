@@ -44,7 +44,9 @@ volumes:
       # Uses root (0) by default.
       uid: ""
       # -- GID for mounted volume inside the container.
-      # Uses `fsGroup` from `securityContext` by default, if set, otherwise uses root (0) as default.
+      # The driver uses `fsGroup` from `securityContext` by default, if set, otherwise uses root (0) as default.
+      # A default of `2000` is applied by this chart as when using the default from fsGroup the driver overwrites the file_mode with group RWX.
+      # @default -- `2000`
       gid: ""
       # -- Mount as read-only
       readonly: false
