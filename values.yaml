@@ -343,7 +343,8 @@ smbstorage:
   # -- Multiple SMB volumes configuration (map with volume name as key)
   volumes:
     example:
-      # -- Enable or disable this specific volume
+      # -- Enable or disable this specific volume.
+      # Setting this to `false` still adds it as a `volume` to the container, but omitting the `volumeMount`.
       enabled: false
       mount:
         # -- Enable mounting this volume in the container

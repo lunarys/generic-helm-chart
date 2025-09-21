@@ -229,7 +229,7 @@ spec:
         {{- end }}
         {{- if .Values.smbstorage.enabled }}
         {{- range $volumeName, $volume := .Values.smbstorage.volumes }}
-        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) (or (not (hasKey $volume "mount")) (not (hasKey $volume.mount "enabled")) (ne $volume.mount.enabled false)) }}
+        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) }}
         - name: {{ printf "smb-%s" $volumeName }}
           persistentVolumeClaim:
             claimName: {{ (($volume.pvc).name) | default (printf "%s-%s-pvc-smb" $.Release.Name $volumeName) }}
@@ -238,7 +238,7 @@ spec:
         {{- end }}
         {{- if .Values.longhornstorage.enabled }}
         {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
-        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
+        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) }}
         - name: {{ printf "longhorn-%s" $volumeName }}
           persistentVolumeClaim:
             claimName: {{ $volume.name | default (printf "%s-%s-pvc" $.Release.Name $volumeName) }}
