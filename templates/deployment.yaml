@@ -76,9 +76,17 @@ spec:
             {{- toYaml .Values.livenessProbe.override | nindent 12 }}
           {{- else }}
           livenessProbe:
+            {{- if .Values.livenessProbe.http.port }}
             httpGet:
-              path: /{{  trimAll "/" (tpl .Values.livenessProbe.path .) }}
-              port: {{ tpl .Values.livenessProbe.port . }}
+              path: {{ .Values.livenessProbe.http.path | default "/" }}
+              port: {{ .Values.livenessProbe.http.port }}
+            {{- else if .Values.livenessProbe.tcp.port }}
+            tcpSocket:
+              port: {{ .Values.livenessProbe.tcp.port }}
+            {{- else if .Values.livenessProbe.exec.command }}
+            exec:
+              command: {{- toYaml .Values.livenessProbe.exec.command | nindent 16 }}
+            {{- end }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -90,9 +98,17 @@ spec:
             {{- toYaml .Values.readinessProbe.override | nindent 12 }}
           {{- else }}
           readinessProbe:
+            {{- if .Values.readinessProbe.http.port }}
             httpGet:
-              path: /{{  trimAll "/" (tpl .Values.readinessProbe.path .) }}
-              port: {{ tpl .Values.readinessProbe.port . }}
+              path: {{ .Values.readinessProbe.http.path | default "/" }}
+              port: {{ .Values.readinessProbe.http.port }}
+            {{- else if .Values.readinessProbe.tcp.port }}
+            tcpSocket:
+              port: {{ .Values.readinessProbe.tcp.port }}
+            {{- else if .Values.readinessProbe.exec.command }}
+            exec:
+              command: {{- toYaml .Values.readinessProbe.exec.command | nindent 16 }}
+            {{- end }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}

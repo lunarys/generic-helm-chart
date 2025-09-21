@@ -167,16 +167,28 @@ services:
     externalIPs: []
     #ipFamilyPolicy: PreferDualStack
 
-
 # -- configuration for the liveness probe. By default, the liveness probe is executed against `{{ .Values.actuator.port }}/{{ .Values.actuator.basePath }}/{{ .Values.actuator.contextPath }}/health/liveness`
 # @default -- see below
 livenessProbe:
   # -- enables or disables the liveness probe
   enabled: false
-  # -- path where the liveness probe checks for the health status of your app. Defaults to spring actuator health endpoint. Helm templating is supported
-  path: '/health/liveness'
-  # -- port where the liveness probe checks for the health status of your app. Defaults to spring actuator port. Helm templating is supported
-  port: "{{ .Values.actuator.port }}"
+
+  # -- HTTP variant of the liveness probe. Runs against a path on a port.
+  http:
+    # -- Path for the liveness probe to check. Optional.
+    # @default -- '/'
+    path: ""
+    # -- Port for the liveness probe to check.
+    port: ""
+  # TCP socket variant of the liveness probe. Runs against an open tcp port.
+  tcp:
+    # -- Port for the liveness probe to check.
+    port: ""
+  # Command exec variant of the liveness probe. Executes a command in the container.
+  exec:
+    # Command for the liveness probe to execute.
+    command: ""
+
   # -- initial delay in seconds before the liveness probe starts checking. This is needed because the app needs some time to start up.
   initialDelaySeconds: 10
   # -- period in seconds after which the liveness probe checks again
@@ -190,10 +202,23 @@ livenessProbe:
 readinessProbe: 
   # -- enables or disables the readiness probe
   enabled: false
-  # -- path where the readiness probe checks for the health status of your app. Defaults to spring actuator health endpoint. Helm templating is supported
-  path: '/health/readiness'
-  # -- port where the readiness probe checks for the health status of your app. Defaults to spring actuator port. Helm templating is supported
-  port: "{{ .Values.actuator.port }}"
+
+  # -- HTTP variant of the readiness probe. Runs against a path on a port.
+  http:
+    # -- Path for the readiness probe to check. Optional.
+    # @default -- '/'
+    path: ""
+    # -- Port for the readiness probe to check.
+    port: ""
+  # TCP socket variant of the readiness probe. Runs against an open tcp port.
+  tcp:
+    # -- Port for the readiness probe to check.
+    port: ""
+  # Command exec variant of the readiness probe. Executes a command in the container.
+  exec:
+    # Command for the readiness probe to execute.
+    command: ""
+
   # -- initial delay in seconds before the readiness probe starts checking s
   initialDelaySeconds: 5
   # -- period in seconds after which the readiness probe checks again

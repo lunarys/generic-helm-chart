@@ -1,0 +1,362 @@
+suite: Test Deployment Probe Configuration
+
+templates:
+  - deployment.yaml
+
+tests:
+  # Test disabled probes
+  - it: should not render probes when disabled
+    set:
+      livenessProbe:
+        enabled: false
+      readinessProbe:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe
+
+  # Test HTTP liveness probe
+  - it: should render HTTP liveness probe when http.port is set
+    set:
+      livenessProbe:
+        enabled: true
+        http:
+          port: 8080
+          path: /health
+        initialDelaySeconds: 30
+        periodSeconds: 15
+        failureThreshold: 3
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 30
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 15
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 3
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.exec
+
+  # Test HTTP liveness probe with default path
+  - it: should render HTTP liveness probe with default path when path is not set
+    set:
+      livenessProbe:
+        enabled: true
+        http:
+          port: 8080
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+
+  # Test TCP liveness probe
+  - it: should render TCP liveness probe when tcp.port is set
+    set:
+      livenessProbe:
+        enabled: true
+        tcp:
+          port: 5432
+        http:
+          port: ""  # Empty string should not trigger HTTP probe
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        failureThreshold: 2
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket.port
+          value: 5432
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 10
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 2
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.exec
+
+  # Test Exec liveness probe
+  - it: should render Exec liveness probe when exec.command is set
+    set:
+      livenessProbe:
+        enabled: true
+        exec:
+          command: ["cat", "/tmp/healthy"]
+        http:
+          port: ""  # Empty string should not trigger HTTP probe
+        tcp:
+          port: ""  # Empty string should not trigger TCP probe
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.exec.command
+          value: ["cat", "/tmp/healthy"]
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket
+
+  # Test HTTP readiness probe
+  - it: should render HTTP readiness probe when http.port is set
+    set:
+      readinessProbe:
+        enabled: true
+        http:
+          port: 9090
+          path: /ready
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        failureThreshold: 3
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 9090
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ready
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.initialDelaySeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.periodSeconds
+          value: 10
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.exec
+
+  # Test HTTP readiness probe with default path
+  - it: should render HTTP readiness probe with default path when path is not set
+    set:
+      readinessProbe:
+        enabled: true
+        http:
+          port: 8080
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+
+  # Test TCP readiness probe
+  - it: should render TCP readiness probe when tcp.port is set
+    set:
+      readinessProbe:
+        enabled: true
+        tcp:
+          port: 3306
+        http:
+          port: ""  # Empty string should not trigger HTTP probe
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket.port
+          value: 3306
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.exec
+
+  # Test Exec readiness probe
+  - it: should render Exec readiness probe when exec.command is set
+    set:
+      readinessProbe:
+        enabled: true
+        exec:
+          command: ["pg_isready", "-U", "postgres"]
+        http:
+          port: ""  # Empty string should not trigger HTTP probe
+        tcp:
+          port: ""  # Empty string should not trigger TCP probe
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.exec.command
+          value: ["pg_isready", "-U", "postgres"]
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket
+
+  # Test priority: HTTP over TCP
+  - it: should prioritize HTTP probe over TCP when both are configured
+    set:
+      livenessProbe:
+        enabled: true
+        http:
+          port: 8080
+          path: /health
+        tcp:
+          port: 5432
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+
+  # Test priority: HTTP over Exec
+  - it: should prioritize HTTP probe over Exec when both are configured
+    set:
+      livenessProbe:
+        enabled: true
+        http:
+          port: 8080
+          path: /health
+        exec:
+          command: ["cat", "/tmp/healthy"]
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.exec
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+
+  # Test priority: TCP over Exec
+  - it: should prioritize TCP probe over Exec when both are configured and HTTP is not
+    set:
+      livenessProbe:
+        enabled: true
+        tcp:
+          port: 5432
+        exec:
+          command: ["cat", "/tmp/healthy"]
+        http:
+          port: ""  # Empty string should not trigger HTTP probe
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.exec
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket.port
+          value: 5432
+
+  # Test override functionality
+  - it: should use override configuration when provided for liveness probe
+    set:
+      livenessProbe:
+        enabled: true
+        override:
+          httpGet:
+            path: /custom
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        http:
+          port: 8080  # This should be ignored when override is present
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /custom
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 3000
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 60
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 30
+
+  # Test override functionality for readiness probe
+  - it: should use override configuration when provided for readiness probe
+    set:
+      readinessProbe:
+        enabled: true
+        override:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 15
+        tcp:
+          port: 5432  # This should be ignored when override is present
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket.port
+          value: 4000
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.initialDelaySeconds
+          value: 15
+
+  # Test both probes with different types
+  - it: should render different probe types for liveness and readiness
+    set:
+      livenessProbe:
+        enabled: true
+        http:
+          port: 8080
+          path: /health
+      readinessProbe:
+        enabled: true
+        tcp:
+          port: 5432
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket.port
+          value: 5432
+
+  # Test that no probe is rendered when all variants are empty
+  - it: should not render probe when all variants are empty but enabled is true
+    set:
+      livenessProbe:
+        enabled: true
+        http:
+          port: ""
+          path: ""
+        tcp:
+          port: ""
+        exec:
+          command: ""
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.exec
