@@ -269,13 +269,16 @@ spec:
               # Exclude lost+found from the check
               if [ -z "$(ls -A /to | grep -v '^lost+found$')" ]; then
                 echo "Target directory /to is empty, proceeding with copy."
-                cp -a /from/. /to/.
+                cp -dR /from/. /to/.
                 echo "Copy completed."
               else
                 echo "Target directory /to is not empty skipping copy."
               fi
             {{- else }}
-              cp -a /from/. /to/.
+              cp -dR /from/. /to/.
+            {{- end }}
+            {{- if .Values.initCopy.sleep }}
+              sleep {{ .Values.initCopy.sleep }}
             {{- end }}
           volumeMounts:
             {{- if .Values.initCopy.fromVolume }}
