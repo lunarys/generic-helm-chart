@@ -101,10 +101,12 @@ volumes:
     enabled: false
     smb:
       host: erolas.elda
-      share: tmp
+      share: "k8s-prod-init"
       capacity: "10Gi"
     externalsecret:
-      commonRemoteKey: "todo"
+      # bitwarden secret containing user and password for the smb share
+      # for test user k8s-test-init with remote key "33df0a50-c169-4242-97c2-b33b00dbe4ca"
+      commonRemoteKey: "adc837a8-05e3-4a99-95a1-b35e01515b56"
 
 
 # Default to be used when fields for externalsecret are not defined.
