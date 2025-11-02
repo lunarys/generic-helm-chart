@@ -13,9 +13,9 @@ spec:
     {{- range $portName, $port := $service.ports }}
     {{- if or (not (hasKey $port "enabled")) $port.enabled }}
     - name: {{ $portName }}
-      protocol: {{ $port.protocol }}
-      port: {{ $port.port }}
-      targetPort: {{ $port.targetPort }}
+      protocol: {{ $port.protocol | default "TCP" }}
+      port: {{ $port.port | required "port for a service in services is missing" }}
+      targetPort: {{ $port.targetPort | default $port.port }}
     {{- end }}
     {{- end }}
   selector:

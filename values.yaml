@@ -138,7 +138,8 @@ service:
   name: ""
   # -- default port where the ingress routes the traffic to the service
   port: 80
-  protocol: TCP
+  # -- protocol to use (UDP/TCP)
+  protocol: "TCP"
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)
   targetPort: 8080
   externalIPs: []
@@ -158,10 +159,13 @@ services:
         # -- Enable or disable this port.
         enabled: true
         # -- Protocol for the service port (e.g., TCP, UDP).
-        protocol: "TCP"
+        # @default -- TCP
+        protocol: ""
         # -- Port exposed by the service.
+        # @default -- none
         port: 80
         # -- Target port on the pod to route traffic to.
+        # @default -- `.port`
         targetPort: 8080
     # -- List of external IPs for the service.
     externalIPs: []

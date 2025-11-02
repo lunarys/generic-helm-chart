@@ -318,3 +318,29 @@ tests:
       - equal:
           path: spec.ports[0].name
           value: http
+
+  - it: should use default protocol
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              port: 80
+    asserts:
+      - equal: 
+          path: spec.ports[0].protocol
+          value: TCP
+
+  - it: should use port as default targetPort
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              port: 80123
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 80123
