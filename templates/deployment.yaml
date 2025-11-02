@@ -233,11 +233,11 @@ spec:
             path: {{ .nfs.path }}
           {{- else if .emptyDir }}
           emptyDir:
-            {{- if .sizeLimit }}
-            sizeLimit: {{ .sizeLimit }}
+            {{- if .emptyDir.sizeLimit }}
+            sizeLimit: {{ .emptyDir.sizeLimit }}
             {{- end }}
-            {{- if .medium }}
-            medium: {{ .medium }}
+            {{- if .emptyDir.medium }}
+            medium: {{ .emptyDir.medium }}
             {{- end }}
           {{- else }}
             {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume " -}}
