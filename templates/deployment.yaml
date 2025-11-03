@@ -114,23 +114,23 @@ spec:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           {{- end }}
           {{- end }}
-          {{- if .Values.service.enabled }}
           ports:
+            {{- if .Values.service.enabled }}
             - containerPort: {{ .Values.service.targetPort }}
               name: default
               protocol: {{ .Values.service.protocol }}
+            {{- end }}
             {{- range $name, $service := .Values.services }}
               {{- if $service.enabled }}
                 {{- range $portName, $port := $service.ports }}
                   {{- if or (not (hasKey $port "enabled")) $port.enabled }}
-            - containerPort: {{ $port.targetPort }}
+            - containerPort: {{ $port.targetPort | default $port.port }}
               name: {{ printf "%s-%s" $name $portName }}
               protocol: {{ $port.protocol | default "TCP" }}
                   {{- end }}
                 {{- end }}
               {{- end }}
             {{- end }}
-          {{- end }}
           #config values that comes from the configmap 
           envFrom:
             {{- with .Values.externalsecrets }}
