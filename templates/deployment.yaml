@@ -125,7 +125,7 @@ spec:
                 {{- range $portName, $port := $service.ports }}
                   {{- if or (not (hasKey $port "enabled")) $port.enabled }}
             - containerPort: {{ $port.targetPort | default $port.port }}
-              name: {{ printf "%s-%s" $name $portName }}
+              name: {{ $portName }}
               protocol: {{ $port.protocol | default "TCP" }}
                   {{- end }}
                 {{- end }}
