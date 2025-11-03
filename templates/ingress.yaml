@@ -3,7 +3,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.ingress.name | default .Release.Name | quote }}
+  name: {{ include "ju-common.ingressName" . }}
   annotations:
     {{- include "ju-common.ingress.middlewares" . | indent 4 }}
     {{- with .Values.ingress.annotations -}}

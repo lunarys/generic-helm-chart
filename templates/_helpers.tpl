@@ -70,6 +70,10 @@ Ingress path helper
   {{- end -}}
 {{- end }}
 
+{{- define "ju-common.ingressName" -}}
+{{ .Values.ingress.name | default (include "ju-common.fullname" .) }}
+{{- end -}}
+
 {{/*
 Source of truth for the service name
 */}}
