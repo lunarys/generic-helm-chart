@@ -19,6 +19,13 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: {{ .Values.preset.ingress.fromNamespace }}
     {{- end }}
+    {{- if .Values.preset.ingress.fromNamespaces }}
+    - fromEndpoints:
+        {{- range .Values.preset.ingress.fromNamespaces }}
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ . }}
+        {{- end }}
+    {{- end }}
     {{- if .Values.preset.ingress.fromCluster }}
     - fromEntities:
         - cluster
@@ -54,6 +61,13 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: {{ .Values.preset.egress.toNamespace }}
+    {{- end }}
+    {{- if .Values.preset.egress.toNamespaces }}
+    - toEndpoints:
+        {{- range .Values.preset.egress.toNamespaces }}
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ . }}
+        {{- end }}
     {{- end }}
     {{- if .Values.preset.egress.toCluster }}
     - toEntities:

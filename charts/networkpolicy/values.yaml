@@ -31,6 +31,8 @@ preset:
     fromCluster: false
     # -- Allow ingress from a specific namespace
     fromNamespace: ""
+    # -- Same as `fromNamespace`, but takes a list of namespaces.
+    fromNamespaces: []
     # -- Allow ingress from the world (external traffic)
     fromWorld: false
     # -- Allow ingress from local subnet CIDR
@@ -50,6 +52,8 @@ preset:
     toCluster: false
     # -- Allow egress to a specific namespace
     toNamespace: ""
+    # -- Same as `toNamespace`, but takes a list of namespaces.
+    toNamespaces: []
     # -- Allow egress to the world (external traffic)
     toWorld: false
     # -- Allow egress to local subnet CIDR
