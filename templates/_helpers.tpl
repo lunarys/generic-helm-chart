@@ -86,7 +86,12 @@ Source of truth for the service name
 Expand the name of the chart.
 */}}
 {{- define "ju-common.name" -}}
-{{- default .Release.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- $defaultName := .Chart.Name }}
+{{- if eq $defaultName "generic-service" }}
+{{- /* In case the chart has no alias this is not very telling. So use the release name then. */}}
+{{- $defaultName = .Release.Name }}
+{{- end }}
+{{- .Values.nameOverride | default $defaultName | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
