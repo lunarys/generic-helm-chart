@@ -40,8 +40,9 @@ fields:
     # -- Property to fetch from Bitwarden, e.g. `username`, `password`, `myfieldname`
     # @default -- name of the map key
     remoteProperty: password
-    # -- Use a static string for this field.
+    # -- Use a static string for this field. 
     # Ignores remoteKey and remoteProperty.
+    # Can also be used to define a template that uses other remoteProperties.
     static: ""
 
 
