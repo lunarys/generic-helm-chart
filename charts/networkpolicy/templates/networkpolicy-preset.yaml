@@ -2,9 +2,17 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: {{ .Values.preset.name | default (printf "%s-preset-cnp" .Release.Name) }}
+  name: {{ .Values.preset.name | default (printf "%s-preset-cnp" (coalesce .Values.nameOverride .Values.global.nameOverride .Release.Name)) }}
 spec:
+  {{- if .Values.preset.endpointSelector }}
   endpointSelector: {{ toYaml .Values.preset.endpointSelector | nindent 4 }}
+  {{- else if .Values.preset.useChartEndpointSelector }}
+  endpointSelector:
+    matchLabels:
+      {{- include "ju-common.selectorLabels" . | nindent 6 }}
+  {{- else }}
+  endpointSelector: {}
+  {{- end }}
   {{- if not .Values.preset.ingress.unrestricted }}
   ingress:
     {{- if .Values.preset.ingress.none }}

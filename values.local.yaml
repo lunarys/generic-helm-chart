@@ -92,3 +92,8 @@ smbstorage:
   volumes:
     init-default:
       enabled: true
+
+networkpolicy:
+  enabled: true
+  preset:
+    useChartEndpointSelector: true

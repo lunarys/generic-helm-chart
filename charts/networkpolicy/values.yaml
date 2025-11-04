@@ -17,8 +17,12 @@ preset:
   # -- Name of the preset CiliumNetworkPolicy resource
   name: ""
 
-  # -- Endpoint selector to target specific pods, defaults to all pods in the namespace
+  # -- Endpoint selector to target specific pods, defaults to all pods in the namespace.
   endpointSelector: {}
+
+  # -- Use a predefined endpointSelector that matches only pods deployed with the same chart.
+  # This can be useful if multiple services are deployed in the same namespace.
+  useChartEndpointSelector: false
 
   # -- Enable namespace isolation (allow traffic only within the same namespace)
   namespaceIsolation: true
