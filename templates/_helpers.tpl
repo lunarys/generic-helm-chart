@@ -154,21 +154,7 @@ app.kubernetes.io/part-of: {{ .Values.global.Chart.Name }}
 Common annotations
 */}}
 {{- define "ju-common.annotations" -}}
-logs.k8s.aeb.com/service: {{ .Chart.Name }}
-logs.k8s.aeb.com/space: {{ .Release.Namespace }}
-{{- if .Values.logFormat }}
-logs.k8s.aeb.com/log-format:  {{ .Values.logFormat }}
-{{- end }}
-{{- if .Values.global.argoCd }}
-gitops.k8s.aeb.com/branch: {{ .Values.global.argoCd.appSourceTargetRevision }}
-gitops.k8s.aeb.com/path: {{ .Values.global.argoCd.appSourcePath }}
-gitops.k8s.aeb.com/repository: {{ .Values.global.argoCd.appSourceRepoUrl }}
-{{- end }}
-{{- /* annotations to identitfy the corresponding ju-library-chart */ -}}
-{{- if and .Values.libraryChart .Values.libraryChart.name }}
-helm.k8s.aeb.com/component-chart-name: {{ .Values.libraryChart.name }}
-helm.k8s.aeb.com/component-chart-version: {{ .Chart.Version }}
-{{- end }}
+{{- /* Nothing here right now */ -}}
 {{- end }}
 
 {{/*
