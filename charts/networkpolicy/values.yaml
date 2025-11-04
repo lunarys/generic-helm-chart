@@ -1,3 +1,6 @@
+global:
+  nameOverride: ""
+
 # -- Enable or disable the chart and all resources
 enabled: true
 
