@@ -12,6 +12,9 @@ global:
     # @default -- false
     autoRestartOnSecretChange: ""
 
+  # -- Name override that may be used by subcharts, too.
+  nameOverride: ""
+
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
 # @default -- see below
