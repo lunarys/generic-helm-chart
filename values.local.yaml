@@ -97,3 +97,7 @@ networkpolicy:
   enabled: true
   preset:
     useChartEndpointSelector: true
+
+update:
+  strategy:
+    type: Recreate

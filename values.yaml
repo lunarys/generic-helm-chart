@@ -434,3 +434,14 @@ initCopy:
   toVolume: ""
   force: false
   sleep: ""
+
+
+# -- Strategy for updating the deployment.
+# This can be left empty to use the default Kubernetes strategy,
+# or can be customized as needed.
+update:
+  strategy: {}
+    #type: RollingUpdate | Recreate
+    #rollingUpdate:
+    #  maxSurge: 0
+    #  maxUnavailable: 1
