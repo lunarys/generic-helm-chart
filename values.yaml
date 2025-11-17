@@ -96,7 +96,7 @@ useContainerSecurityContextPreset: true
 containerSecurityContextPreset:
   allowPrivilegeEscalation: false
   privileged: false
-  runAsNonRoot: true
+  #runAsNonRoot: true  # <-- only use preset in podSecurityContextPreset
   # -- Should be enabled if the container supports it.
   readOnlyRootFilesystem: false
   capabilities:
