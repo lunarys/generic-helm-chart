@@ -1,0 +1,5 @@
+apiVersion: v2
+name: autoscale
+description: Helper for autoscaling deployments using KEDA
+type: application
+version: 0.1.0

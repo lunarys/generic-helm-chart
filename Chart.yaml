@@ -14,3 +14,5 @@ dependencies:
     version: 0.1.0
   - name: localstorage
     version: 0.1.0
+  - name: autoscale
+    version: 0.1.0

@@ -1,0 +1,58 @@
+{{- if false }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: http-scaledobject
+  labels:
+    deploymentName: dummy
+spec:
+  scaleTargetRef:
+    apiVersion:    {api-version-of-target-resource}         # Optional. Default: apps/v1
+    kind:          {kind-of-target-resource}                # Optional. Default: Deployment
+    name:          {name-of-target-resource}                # Mandatory. Must be in the same namespace as the ScaledObject
+    envSourceContainerName: {container-name}                # Optional. Default: .spec.template.spec.containers[0]
+  pollingInterval:  30                                      # Optional. Default: 30 seconds
+  cooldownPeriod:   300                                     # Optional. Default: 300 seconds
+  initialCooldownPeriod:  0                                 # Optional. Default: 0 seconds
+  idleReplicaCount: 0                                       # Optional. Default: ignored, must be less than minReplicaCount
+  minReplicaCount:  1                                       # Optional. Default: 0
+  maxReplicaCount:  100                                     # Optional. Default: 100
+  fallback:                                                 # Optional. Section to specify fallback options
+    failureThreshold: 3                                     # Mandatory if fallback section is included
+    replicas: 6                                             # Mandatory if fallback section is included
+    behavior: {kind-of-behavior}                            # Optional. Default: "static"
+    currentReplicasIfHigher: 0
+    #currentReplicasIfLower 
+  advanced:                                                 # Optional. Section to specify advanced options
+    restoreToOriginalReplicaCount: true/false               # Optional. Default: false
+    horizontalPodAutoscalerConfig:                          # Optional. Section to specify HPA related options
+      name: {name-of-hpa-resource}                          # Optional. Default: keda-hpa-{scaled-object-name}
+      behavior:                                             # Optional. Use to modify HPA's scaling behavior
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 100
+            periodSeconds: 15
+    scalingModifiers:
+      formula: "(trig_one + trig_two)/2"
+      target: "2"
+      activationTarget: "2"
+      metricType: "AverageValue"
+  triggers:
+    # {list of triggers to activate scaling of the target resource}
+    - type: metrics-api
+      metadata:
+        targetValue: "7"
+        url: "http://api:3232/components/stats"
+        valueLocation: 'components.worker.tasks'
+    - type: kubernetes-workload
+      name: trig_one
+      metadata:
+        podSelector: 'pod=workload-test'
+    - type: metrics-api
+      name: trig_two
+      metadata:
+        url: "https://mockbin.org/bin/336a8d99-9e09-4f1f-979d-851a6d1b1423"
+        valueLocation: "tasks"
+{{- end }}

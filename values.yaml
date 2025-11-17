@@ -445,3 +445,7 @@ update:
     #rollingUpdate:
     #  maxSurge: 0
     #  maxUnavailable: 1
+
+
+autoscale:
+  enabled: false

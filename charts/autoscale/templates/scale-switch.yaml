@@ -1,0 +1,39 @@
+{{- if and .Values.enabled .Values.preset.switch.enabled }}
+# Implement an external switch that is used as a metric to scale the target resource
+# or turn it on/off
+# Reference: https://keda.sh/docs/2.18/reference/scaledobject-spec/
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Release.Name }}-scale-switch
+spec:
+  scaleTargetRef:
+    name: {{ coalesce .Values.scaleTargetRef.name .Values.global.nameOverride .Release.Name | trunc 63 | trimSuffix "-" }}
+    {{- if .Values.scaleTargetRef.apiVersion }}
+    apiVersion: {{ .Values.scaleTargetRef.apiVersion }}
+    {{- end }}
+    {{- if .Values.scaleTargetRef.kind }}
+    kind: {{ .Values.scaleTargetRef.kind }}
+    {{- end }}
+    {{- if .Values.scaleTargetRef.envSourceContainerName }}
+    envSourceContainerName: {{ .Values.scaleTargetRef.envSourceContainerName }}
+    {{- end }}
+  pollingInterval:  {{ .Values.preset.switch.pollingInterval }}
+  cooldownPeriod: {{ .Values.preset.switch.cooldownPeriod }}
+  initialCooldownPeriod: {{ .Values.preset.switch.initialCooldownPeriod }}
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  {{- if .Values.preset.switch.fallback }}
+  fallback:
+    {{- toYaml .Values.preset.switch.fallback | nindent 4 }}
+  {{- end }}
+  advanced:
+    restoreToOriginalReplicaCount: true
+  triggers:
+    - type: metrics-api
+      name: {{ .Values.preset.switch.triggerName }}
+      metadata:
+        targetValue: {{ .Values.preset.switch.targetValue | quote }}
+        url: {{ .Values.preset.switch.url | quote }}
+        valueLocation: {{ .Values.preset.switch.valueLocation | quote }}
+{{- end }}

@@ -5,7 +5,11 @@ metadata:
   {{- include "ju-common.labels" . | nindent 4 }}
   name: {{ include "ju-common.fullname" . }}
 spec:
+  {{- if not .Values.autoscale.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- else }}
+  replicas: 0
+  {{- end }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:

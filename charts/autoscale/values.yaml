@@ -1,0 +1,38 @@
+enabled: true
+
+scaleTargetRef:
+  # -- 
+  # @default -- {{ .Release.Name }}
+  name: ""
+  apiVersion: ""
+  kind: ""
+  envSourceContainerName: ""
+
+preset:
+  # -- Preconfigured autoscale to switch the deployment on/off via external HTTP endpoint, e.g. nodered.
+  switch:
+    enabled: false
+
+    pollingInterval: 30
+    cooldownPeriod: 0
+    initialCooldownPeriod: 0
+    
+    # -- URL of the metric source endpoint.
+    # See https://keda.sh/docs/2.18/scalers/metrics-api/.
+    url: ""
+    # -- Location of the metric value in the response payload.
+    # See https://keda.sh/docs/2.18/scalers/metrics-api/.
+    valueLocation: "value"
+    # -- Target value for the metric to scale on.
+    # See https://keda.sh/docs/2.18/scalers/metrics-api/.
+    targetValue: "1"
+
+    triggerName: "nodered"
+
+    # -- Optional. Define fallback behavior when the metric source is not reachable.
+    # See https://keda.sh/docs/2.18/reference/scaledobject-spec/#fallback.
+    fallback: {}
+      #failureThreshold: 3
+      #replicas: 0
+      #currentReplicasIfHigher: 0
+      #currentReplicasIfLower: ""
