@@ -62,6 +62,7 @@ build-child:
           - "charts/longhornstorage"
           - "charts/smbstorage"
           - "charts/localstorage"
+          - "charts/autoscale"
   rules:
     - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE != "parent_pipeline"
     - if: $TRIGGER_CHILD_PIPELINES == "true" && $CI_PIPELINE_SOURCE != "parent_pipeline"
