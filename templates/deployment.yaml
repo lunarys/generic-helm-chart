@@ -7,8 +7,6 @@ metadata:
 spec:
   {{- if not .Values.autoscale.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- else }}
-  replicas: 0
   {{- end }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
@@ -87,10 +85,10 @@ spec:
             {{- if .Values.livenessProbe.http.port }}
             httpGet:
               path: {{ .Values.livenessProbe.http.path | default "/" }}
-              port: {{ .Values.livenessProbe.http.port }}
+              port: {{ .Values.livenessProbe.http.port | default .Values.service.targetPort }}
             {{- else if .Values.livenessProbe.tcp.port }}
             tcpSocket:
-              port: {{ .Values.livenessProbe.tcp.port }}
+              port: {{ .Values.livenessProbe.tcp.port | default .Values.service.targetPort }}
             {{- else if .Values.livenessProbe.exec.command }}
             exec:
               command: {{- toYaml .Values.livenessProbe.exec.command | nindent 16 }}
