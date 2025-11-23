@@ -115,6 +115,13 @@ ingress:
   path: /
   pathType: Prefix
 
+  # -- Possibility to overwrite the destination service name.
+  # @default -- The name of the default service.
+  serviceName: ""
+  # -- Possibility to overwrite the destination service port.
+  # @default -- The port of the default service.
+  servicePort: ""
+
   # -- Access control
   accessControl:
     # -- Hostname for external access.
