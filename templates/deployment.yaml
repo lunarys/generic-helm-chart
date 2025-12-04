@@ -214,6 +214,7 @@ spec:
             {{- end }}
       volumes:
         {{- range .Values.extraConfig.volumeMounts }}
+        {{- if not .existingVolume }}
         - name: {{ .name }}
           {{- if .hostPath }}
           hostPath:
@@ -249,8 +250,9 @@ spec:
             medium: {{ .emptyDir.medium }}
             {{- end }}
           {{- else }}
-            {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume " -}}
+            {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume. Maybe use 'existingVolume: true'?" -}}
           {{- end }}
+        {{- end }}
         {{- end }}
         {{- if .Values.smbstorage.enabled }}
         {{- range $volumeName, $volume := .Values.smbstorage.volumes }}

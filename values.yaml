@@ -322,11 +322,15 @@ extraConfig:
 
   # -- Possibility to add additional [volumemounts](https://kubernetes.io/docs/concepts/storage/volumes/) to your application.
   # Either specify a secretName or a configMap with items or nfs. have a look at the values.yaml below for examples.
+  # Includes a volume definition, unless `existingVolume` is set, default is false.
   volumeMounts: []
     # --- required config for all variants ---:
     #- name: "" # choose a name of the volume
     #  mountPath: "" # path where you want the volume to be mounted in the container
     #  readOnly: "" # whether the volume is read-only or not
+
+    # --- optional ---
+    #  existingVolume: false
     
     # -- either `secretName` or `configMap` with items or `nfs` ---:
 
