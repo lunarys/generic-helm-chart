@@ -242,6 +242,30 @@ tests:
                   dns:
                     - matchPattern: "*"
 
+  - it: should rander toFQDNs
+    set:
+      preset:
+        egress:
+          toFQDNs:
+            - "this.is.a.test"
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toFQDNs:
+              - matchName: "this.is.a.test"
+
+  - it: should not render toFQDNs when not set
+    set:
+      preset:
+        namespaceIsolation: true
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            toFQDNs: {}
+          any: true  # should match only the key
+
   - it: should render custom ingress rules
     set:
       preset:

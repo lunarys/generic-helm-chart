@@ -106,6 +106,12 @@ spec:
             dns:
               - matchPattern: "*"
     {{- end }}
+    {{- if .Values.preset.egress.toFQDNs }}
+    - toFQDNs:
+        {{- range .Values.preset.egress.toFQDNs }}
+        - matchName: {{ . | quote }}
+        {{- end }}
+    {{- end }}
     {{- range .Values.preset.egress.rules }}
     - {{ toYaml . | nindent 6 }}
     {{- end }}

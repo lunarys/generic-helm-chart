@@ -69,6 +69,8 @@ preset:
     toKubeApi: false
     # -- Allow egress to kube-dns for DNS resolution
     toKubeDns: true
+    # -- Allow egress to the specified FQDNs
+    toFQDNs: []
     # -- Allow all egress traffic (adds '- {}' rule)
     none: false
     # -- Custom egress rules (array of rule objects)
