@@ -167,10 +167,10 @@ spec:
             # settings from 'env'
             {{- range $name, $value := .Values.env }}
             - name: {{ default $name | quote }}
-              {{- if kindIs "string" $value }}
-              value: {{ $value | quote }}
-              {{- else }}
+              {{- if kindIs "map" $value }}
               {{- omit $value "name" | toYaml | nindent 14 }}
+              {{- else }}
+              value: {{ $value | toString | quote }}
               {{- end }}
             {{- end }}
             {{- end }}

@@ -277,3 +277,20 @@ tests:
           content:
             name: NON_EMPTY_VAR
             value: "value"
+
+  - it: should handle numeric and boolean values by converting them to strings
+    set:
+      env:
+        NUMERIC_VAR: 12345
+        BOOLEAN_VAR: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NUMERIC_VAR
+            value: "12345"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BOOLEAN_VAR
+            value: "true"
