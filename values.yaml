@@ -62,6 +62,10 @@ replicaCount: 1
 # -- how many old deployment revision histories you want to keep 
 revisionHistoryLimit: 2
 
+# -- Configure termination grace period for the pod in seconds.
+# This is the time Kubernetes will wait after sending a termination signal before forcefully killing the pod.
+terminationGracePeriodSeconds: ""
+
 # -- possibility to specify a nodeSelector
 nodeSelector: {}
 
@@ -147,7 +151,8 @@ service:
   type: ClusterIP
   name: ""
   # -- default port where the ingress routes the traffic to the service
-  port: 80
+  # 
+  port: ""
   # -- protocol to use (UDP/TCP)
   protocol: "TCP"
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)
