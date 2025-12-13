@@ -151,8 +151,7 @@ service:
   type: ClusterIP
   name: ""
   # -- default port where the ingress routes the traffic to the service
-  # 
-  port: ""
+  port: 80
   # -- protocol to use (UDP/TCP)
   protocol: "TCP"
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)
