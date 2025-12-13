@@ -88,10 +88,10 @@ spec:
             {{- if .Values.livenessProbe.http.port }}
             httpGet:
               path: {{ .Values.livenessProbe.http.path | default "/" }}
-              port: {{ .Values.livenessProbe.http.port | default .Values.service.targetPort }}
+              port: {{ .Values.livenessProbe.http.port }}
             {{- else if .Values.livenessProbe.tcp.port }}
             tcpSocket:
-              port: {{ .Values.livenessProbe.tcp.port | default .Values.service.targetPort }}
+              port: {{ .Values.livenessProbe.tcp.port }}
             {{- else if .Values.livenessProbe.exec.command }}
             exec:
               command: {{- toYaml .Values.livenessProbe.exec.command | nindent 16 }}
