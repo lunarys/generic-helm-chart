@@ -1,0 +1,15 @@
+{{- if .Values.config.values }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ju-common.fullname" . }}-config
+data:
+{{- range $key, $value := .Values.config.values }}
+  {{ $key }}: |-
+    {{- if kindIs "map" $value }}
+      {{- $value | toYaml | nindent 4 }}
+    {{- else }}
+      {{- $value | nindent 4 }}
+    {{- end }}
+{{- end }}
+{{- end }}

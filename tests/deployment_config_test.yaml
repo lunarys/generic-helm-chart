@@ -1,0 +1,82 @@
+suite: ConfigMap mounting in Deployment
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: should not mount configmap by default
+    set:
+      config:
+        values:
+          MY_CONFIG: foo
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom[?(@.configMapRef.name)]
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-values-mount-via-path")]
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-values-mount-via-subpath")]
+
+  - it: should mount configmap as env
+    set:
+      config:
+        enabled: true
+        values:
+          MY_CONFIG: foo
+        mount:
+          env: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: "RELEASE-NAME-config"
+
+  - it: should mount configmap as path
+    set:
+      config:
+        enabled: true
+        values:
+          MY_CONFIG: foo
+        mount:
+          path: /etc/config
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-values-mount-via-path
+            mountPath: /etc/config
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config-values-mount-via-path
+            configMap:
+              name: "RELEASE-NAME-config"
+
+  - it: should mount configmap as subPath
+    set:
+      config:
+        enabled: true
+        values:
+          myfile.yaml: |
+            foo: bar
+        mount:
+          subPath: /etc/config/myconfig.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-values-mount-via-subpath
+            mountPath: /etc/config/myconfig.yaml
+            subPath: myfile.yaml
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config-values-mount-via-subpath
+            configMap:
+              name: "RELEASE-NAME-config"
+              items:
+                - key: myfile.yaml
+                  path: myfile.yaml

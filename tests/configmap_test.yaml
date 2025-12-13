@@ -1,0 +1,40 @@
+suite: ConfigMap rendering
+
+templates:
+  - templates/configmap.yaml
+
+tests:
+  - it: config from a string should work
+    set:
+      config:
+        values:
+          MY_CONFIG: |
+            hello: world
+          ANOTHER_VALUE: abc123
+    asserts:
+      - exists:
+          path: data.MY_CONFIG
+      - equal:
+          path: data.MY_CONFIG
+          value: "hello: world"
+      - exists:
+          path: data.ANOTHER_VALUE
+      - equal:
+          path: data.ANOTHER_VALUE
+          value: "abc123"
+
+  - it: config from yaml should work
+    set:
+      config:
+        values:
+          MY_CONFIG:
+            foo: bar
+            baz: 42
+    asserts:
+      - exists:
+          path: data.MY_CONFIG
+      - equal:
+          path: data.MY_CONFIG
+          value: |-
+            baz: 42
+            foo: bar

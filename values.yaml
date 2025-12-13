@@ -258,6 +258,24 @@ deployment:
   autoRestartOnSecretChange: ""
 
 
+# -- Possibility to specific configuration files or env variables.
+config:
+  # -- Enable or disable the configmap creation.
+  enabled: true
+  # -- Overwrite the default name of the configmap.
+  name: ""
+  # -- Specify how to mount the values.
+  mount:
+    # -- Add the key-value pairs from the config as environment variables.
+    env: false
+    # -- Mount the config as files in the container.
+    path: ""
+    # -- Assuming there is only one config file, mount its content directly into the specified path without creating a directory.
+    subPath: ""
+  # -- Key-value pairs for configuration.
+  values: {}
+
+
 # -- Possibility to add additional [environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) to your application. 
 env: {}
   # if you want pass kubernetes specific values to your app 
