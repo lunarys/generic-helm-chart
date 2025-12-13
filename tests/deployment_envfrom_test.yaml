@@ -162,7 +162,7 @@ tests:
             secretRef:
               name: enabled-secret
 
-  - it: should not render envFrom for individual secrets without mount.env
+  - it: should render envFrom for individual secrets without mount.env -> default enabled
     set:
       externalsecrets:
         enabled: true
@@ -185,12 +185,18 @@ tests:
     asserts:
       - lengthEqual:
           path: spec.template.spec.containers[0].envFrom
-          count: 1
+          count: 2
       - contains:
           path: spec.template.spec.containers[0].envFrom
           content:
             secretRef:
               name: secret-with-env
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: secret-no-mount
+
 
   - it: should combine main external-secret and individual secrets
     set:

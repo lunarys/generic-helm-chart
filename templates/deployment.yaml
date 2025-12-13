@@ -149,7 +149,7 @@ spec:
                 name: {{ default (printf "%s-external-secret" $.Release.Name) .name }}
             {{- end }}
             {{- range $key, $value := .secrets }}
-            {{- if and $value.enabled (hasKey $value "mount") $value.mount.env }}
+            {{- if and (or (not (hasKey $value "enabled")) $value.enabled) (or (not (hasKey $value "mount")) $value.mount.env) }}
             - secretRef:
                 name: {{ default $key $value.name }}
             {{- end }}

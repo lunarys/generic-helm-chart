@@ -442,6 +442,7 @@ externalsecrets:
     exampleSecret:
       mount: 
         # -- Whether to mount this secret as environment variables.
+        # @default -- `true` for all but this example.
         env: false
 
 initCopy:
