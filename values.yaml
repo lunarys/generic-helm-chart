@@ -379,6 +379,9 @@ extraConfig:
     #  # sizeLimit: "1Gi" # limit the size of the emptyDir volume
     #  # medium: "Memory" # use tmpfs (RAM) instead of disk storage
 
+    ### pvc mount
+    #  pvc: "" # name of an existing PersistentVolumeClaim to mount
+
 
 # -- Settings for the ServiceAccount for this deployment. These are only applied if there is are any non-default roles (leader election or explicit role bindings).
 # @default -- see below

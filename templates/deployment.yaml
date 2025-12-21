@@ -274,8 +274,11 @@ spec:
             {{- if .emptyDir.medium }}
             medium: {{ .emptyDir.medium }}
             {{- end }}
+          {{- else if .pvc }}
+          persistentVolumeClaim:
+            claimName: {{ .pvc }}
           {{- else }}
-            {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir is defined as volume. Maybe use 'existingVolume: true'?" -}}
+            {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir or pvc is defined as volume. Maybe use 'existingVolume: true'?" -}}
           {{- end }}
         {{- end }}
         {{- end }}
