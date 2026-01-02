@@ -376,3 +376,47 @@ tests:
             fromEndpoints:
               - matchLabels:
                   io.kubernetes.pod.namespace: traefik
+
+  - it: should render extended fromKubeApi ingress rule by default
+    set:
+      preset:
+        ingress:
+          fromKubeApi: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - kube-apiserver
+              - host
+              - remote-node
+
+  - it: should render fromKubeApi ingress rule with extendedKubeApiIngressRule
+    set:
+      preset:
+        ingress:
+          fromKubeApi: true
+      defaults:
+        extendedKubeApiIngressRule: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - kube-apiserver
+              - host
+              - remote-node
+
+  - it: should render fromKubeApi ingress rule without extendedKubeApiIngressRule
+    set:
+      preset:
+        ingress:
+          fromKubeApi: true
+      defaults:
+        extendedKubeApiIngressRule: false
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - kube-apiserver

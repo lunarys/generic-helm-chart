@@ -42,6 +42,14 @@ spec:
     - fromEntities:
         - world
     {{- end }}
+    {{- if .Values.preset.ingress.fromKubeApi }}
+    - fromEntities:
+        - kube-apiserver
+        {{- if .Values.defaults.extendedKubeApiIngressRule }}
+        - host
+        - remote-node
+        {{- end }}
+    {{- end }}
     {{- if .Values.preset.ingress.fromLocalSubnet }}
     - fromCIDR:
         - {{ .Values.defaults.localSubnetCidr }}

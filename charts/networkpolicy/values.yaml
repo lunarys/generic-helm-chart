@@ -12,6 +12,11 @@ defaults:
   localSubnetCidr: 10.0.0.0/20
   # -- Ingress controller namespace to allow traffic from
   ingressControllerNamespace: traefik
+  # -- Include host and remote-nodes, when ingress from kube API is allowed.
+  # Ingress from the kube API, presumably in particular remote nodes, does not
+  # seem to be reliably labelled as such, leading to errors.
+  # This has been observed mostly on mutation/validation webhook calls.
+  extendedKubeApiIngressRule: true
 
 # -- Preset configuration for common network policy patterns
 preset:
@@ -46,6 +51,9 @@ preset:
     fromLocalSubnet: false
     # -- Allow ingress from ingress controller
     fromIngressController: true
+    # -- Allow ingress from the kube API
+    # Includes the k8s node and remote nodes, if `defaults.extendedKubeApiIngressRule` is set.
+    fromKubeApi: false
     # -- Allow all ingress traffic (adds '- {}' rule)
     none: false
     # -- Custom ingress rules (array of rule objects)
