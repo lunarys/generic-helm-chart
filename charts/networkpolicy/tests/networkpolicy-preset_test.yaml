@@ -420,3 +420,38 @@ tests:
           content:
             fromEntities:
               - kube-apiserver
+
+
+  - it: should render fromNetworkLabels ingress rule
+    set:
+      preset:
+        ingress:
+          fromNetworkLabels:
+            - custom.network/identifier
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  custom.network/identifier: egress
+                matchExpressions:
+                  - key: io.kubernetes.pod.namespace
+                    operator: Exists
+
+  - it: should render toNetworkLabels egress rule
+    set:
+      preset:
+        egress:
+          toNetworkLabels:
+            - custom.network/identifier
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  custom.network/identifier: ingress
+                matchExpressions:
+                  - key: io.kubernetes.pod.namespace
+                    operator: Exists

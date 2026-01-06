@@ -17,6 +17,11 @@ defaults:
   # seem to be reliably labelled as such, leading to errors.
   # This has been observed mostly on mutation/validation webhook calls.
   extendedKubeApiIngressRule: true
+  # -- Value to use for labels that allow ingress from other pods.
+  fromNetworkLabelValue: "ingress"
+  # -- Value to use for labels that allow egress to other pods.
+  toNetworkLabelValue: "egress"
+
 
 # -- Preset configuration for common network policy patterns
 preset:
@@ -54,6 +59,10 @@ preset:
     # -- Allow ingress from the kube API
     # Includes the k8s node and remote nodes, if `defaults.extendedKubeApiIngressRule` is set.
     fromKubeApi: false
+    # -- Define labels that should be allowed to access this workload.
+    # The value for the labels is `ingress` for the incoming side
+    # and `egress` for the outgoing side (from `defaults`).
+    fromNetworkLabels: []
     # -- Allow all ingress traffic (adds '- {}' rule)
     none: false
     # -- Custom ingress rules (array of rule objects)
@@ -79,6 +88,10 @@ preset:
     toKubeDns: true
     # -- Allow egress to the specified FQDNs
     toFQDNs: []
+    # Define labels that this workload should be allowed to access.
+    # The value for the labels is `ingress` for the incoming side
+    # and `egress` for the outgoing side (from `defaults`).
+    toNetworkLabels: []
     # -- Allow all egress traffic (adds '- {}' rule)
     none: false
     # -- Custom egress rules (array of rule objects)

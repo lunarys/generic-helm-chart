@@ -1,0 +1,46 @@
+suite: custom network labels for networkpolicy
+
+templates:
+  - templates/deployment.yaml
+
+set:
+  networkpolicy:
+    enabled: true
+
+tests:
+  - it: should not set network labels by default
+    asserts:
+      - isNotSubset:
+          path: spec.template.metadata.labels
+          content:
+            custom.network/identifier: egress
+      - isNotSubset:
+          path: spec.template.metadata.labels
+          content:
+            custom.network/identifier: ingress
+
+  - it: should set network labels from networkpolicy fromNetworkLabels as ingress
+    set:
+      networkpolicy:
+        preset:
+          ingress:
+            fromNetworkLabels:
+              - custom.network/identifier
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            custom.network/identifier: ingress
+
+  - it: should set network labels from networkpolicy toNetworkLabels as egress
+    set:
+      networkpolicy:
+        preset:
+          egress:
+            toNetworkLabels:
+              - custom.network/identifier
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            custom.network/identifier: egress

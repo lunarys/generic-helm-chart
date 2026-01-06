@@ -164,8 +164,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Pod labels
 */}}
 {{- define "ju-common.podLabels" -}}
+{{ include "ju-common.networkpolicyLabels" . }}
 {{ include "ju-common.selectorLabels" . }}
 {{- end }}
+
+{{/*
+Networkpolicy labels - Used for simplified networkpolicy handling
+*/}}
+{{- define "ju-common.networkpolicyLabels" -}}
+{{- if and .Values.networkpolicy.enabled .Values.networkpolicy.preset.enabled -}}
+  {{- range $label := .Values.networkpolicy.preset.ingress.fromNetworkLabels -}}
+{{ $label }}: {{ $.Values.networkpolicy.defaults.fromNetworkLabelValue }}
+  {{- end }}
+  {{- range $label := .Values.networkpolicy.preset.egress.toNetworkLabels -}}
+{{ $label }}: {{ $.Values.networkpolicy.defaults.toNetworkLabelValue }}
+  {{- end -}}
+{{- end }}
+{{- end }}
+
 
 {{/*
 Create the name of the service account to use

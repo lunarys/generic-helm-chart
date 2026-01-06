@@ -59,6 +59,14 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: {{ .Values.defaults.ingressControllerNamespace }}
     {{- end }}
+    {{- range $fromNetworkLabel := .Values.preset.ingress.fromNetworkLabels }}
+    - fromEndpoints:
+        - matchLabels:
+            {{ $fromNetworkLabel }}: {{ $.Values.defaults.toNetworkLabelValue | quote }}
+          matchExpressions:
+            - key: io.kubernetes.pod.namespace
+              operator: Exists
+    {{- end }}
     {{- range .Values.preset.ingress.rules }}
     - {{ toYaml . | nindent 6 }}
     {{- end }}
@@ -119,6 +127,14 @@ spec:
         {{- range .Values.preset.egress.toFQDNs }}
         - matchName: {{ . | quote }}
         {{- end }}
+    {{- end }}
+    {{- range $toNetworkLabel := .Values.preset.egress.toNetworkLabels }}
+    - toEndpoints:
+        - matchLabels:
+            {{ $toNetworkLabel }}: {{ $.Values.defaults.fromNetworkLabelValue | quote }}
+          matchExpressions:
+            - key: io.kubernetes.pod.namespace
+              operator: Exists
     {{- end }}
     {{- range .Values.preset.egress.rules }}
     - {{ toYaml . | nindent 6 }}

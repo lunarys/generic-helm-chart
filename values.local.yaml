@@ -97,6 +97,9 @@ networkpolicy:
   enabled: true
   preset:
     useChartEndpointSelector: true
+    ingress:
+      fromNetworkLabels:
+        - custom.network/identifier
 
 update:
   strategy:
