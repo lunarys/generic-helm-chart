@@ -73,7 +73,7 @@ spec:
       toPorts:
         - ports:
             {{- range $port := $fromNetworkLabel.ports }}
-            - port: {{ $port }}
+            - port: {{ $port | quote }}
             {{- end }}
       {{- end }}
     {{- end }}
@@ -152,7 +152,7 @@ spec:
       toPorts:
         - ports:
             {{- range $port := $toNetworkLabel.ports }}
-            - port: {{ $port }}
+            - port: {{ $port | quote }}
             {{- end }}
       {{- end }}
     {{- end }}

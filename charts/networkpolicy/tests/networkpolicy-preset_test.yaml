@@ -476,7 +476,7 @@ tests:
                     operator: Exists
             toPorts:
               - ports:
-                  - port: 1234
+                  - port: "1234"
 
   - it: should render toNetworkLabels egress rule with ports
     set:
@@ -498,4 +498,4 @@ tests:
                     operator: Exists
             toPorts:
               - ports:
-                  - port: 5678
+                  - port: "5678"
