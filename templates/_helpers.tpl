@@ -173,13 +173,21 @@ Networkpolicy labels - Used for simplified networkpolicy handling
 */}}
 {{- define "ju-common.networkpolicyLabels" -}}
 {{- if and .Values.networkpolicy.enabled .Values.networkpolicy.preset.enabled -}}
-  {{- range $label := .Values.networkpolicy.preset.ingress.fromNetworkLabels -}}
-{{ $label }}: {{ $.Values.networkpolicy.defaults.fromNetworkLabelValue }}
+  {{- range $fromNetworkLabel := .Values.networkpolicy.preset.ingress.fromNetworkLabels -}}
+{{ include "ju-common.networkpolicyLabels.label" $fromNetworkLabel }}: {{ $.Values.networkpolicy.defaults.fromNetworkLabelValue }}
   {{- end }}
-  {{- range $label := .Values.networkpolicy.preset.egress.toNetworkLabels -}}
-{{ $label }}: {{ $.Values.networkpolicy.defaults.toNetworkLabelValue }}
+  {{- range $toNetworkLabel := .Values.networkpolicy.preset.egress.toNetworkLabels -}}
+{{ include "ju-common.networkpolicyLabels.label" $toNetworkLabel }}: {{ $.Values.networkpolicy.defaults.toNetworkLabelValue }}
   {{- end -}}
 {{- end }}
+{{- end }}
+
+{{- define "ju-common.networkpolicyLabels.label" -}}
+{{- if kindIs "string" . -}}
+{{ . }}
+{{- else -}}
+{{ .label }}
+{{- end -}}
 {{- end }}
 
 

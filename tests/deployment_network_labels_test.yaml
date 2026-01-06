@@ -44,3 +44,29 @@ tests:
           path: spec.template.metadata.labels
           content:
             custom.network/identifier: egress
+
+  - it: should set network labels from networkpolicy fromNetworkLabels as ingress from object notation
+    set:
+      networkpolicy:
+        preset:
+          ingress:
+            fromNetworkLabels:
+              - label: custom.network/identifier
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            custom.network/identifier: ingress
+
+  - it: should set network labels from networkpolicy toNetworkLabels as egress from object notation
+    set:
+      networkpolicy:
+        preset:
+          egress:
+            toNetworkLabels:
+              - label: custom.network/identifier
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            custom.network/identifier: egress

@@ -60,12 +60,22 @@ spec:
             io.kubernetes.pod.namespace: {{ .Values.defaults.ingressControllerNamespace }}
     {{- end }}
     {{- range $fromNetworkLabel := .Values.preset.ingress.fromNetworkLabels }}
+      {{- if kindIs "string" $fromNetworkLabel }}
+        {{- $fromNetworkLabel = dict "label" $fromNetworkLabel }}
+      {{- end }}
     - fromEndpoints:
         - matchLabels:
-            {{ $fromNetworkLabel }}: {{ $.Values.defaults.toNetworkLabelValue | quote }}
+            {{ $fromNetworkLabel.label }}: {{ $.Values.defaults.toNetworkLabelValue | quote }}
           matchExpressions:
             - key: io.kubernetes.pod.namespace
               operator: Exists
+      {{- if $fromNetworkLabel.ports }}
+      toPorts:
+        - ports:
+            {{- range $port := $fromNetworkLabel.ports }}
+            - port: {{ $port }}
+            {{- end }}
+      {{- end }}
     {{- end }}
     {{- range .Values.preset.ingress.rules }}
     - {{ toYaml . | nindent 6 }}
@@ -129,12 +139,22 @@ spec:
         {{- end }}
     {{- end }}
     {{- range $toNetworkLabel := .Values.preset.egress.toNetworkLabels }}
+      {{- if kindIs "string" $toNetworkLabel }}
+        {{- $toNetworkLabel = dict "label" $toNetworkLabel }}
+      {{- end }}
     - toEndpoints:
         - matchLabels:
-            {{ $toNetworkLabel }}: {{ $.Values.defaults.fromNetworkLabelValue | quote }}
+            {{ $toNetworkLabel.label }}: {{ $.Values.defaults.fromNetworkLabelValue | quote }}
           matchExpressions:
             - key: io.kubernetes.pod.namespace
               operator: Exists
+      {{- if $toNetworkLabel.ports }}
+      toPorts:
+        - ports:
+            {{- range $port := $toNetworkLabel.ports }}
+            - port: {{ $port }}
+            {{- end }}
+      {{- end }}
     {{- end }}
     {{- range .Values.preset.egress.rules }}
     - {{ toYaml . | nindent 6 }}

@@ -62,6 +62,9 @@ preset:
     # -- Define labels that should be allowed to access this workload.
     # The value for the labels is `ingress` for the incoming side
     # and `egress` for the outgoing side (from `defaults`).
+    # Either set as a list of strings (labels),
+    # or as objects with `label` and `ports` keys,
+    # expecting a label string and port numbers.
     fromNetworkLabels: []
     # -- Allow all ingress traffic (adds '- {}' rule)
     none: false
@@ -91,6 +94,9 @@ preset:
     # Define labels that this workload should be allowed to access.
     # The value for the labels is `ingress` for the incoming side
     # and `egress` for the outgoing side (from `defaults`).
+    # Either set as a list of strings (labels),
+    # or as objects with `label` and `ports` keys,
+    # expecting a label string and port numbers.
     toNetworkLabels: []
     # -- Allow all egress traffic (adds '- {}' rule)
     none: false

@@ -455,3 +455,47 @@ tests:
                 matchExpressions:
                   - key: io.kubernetes.pod.namespace
                     operator: Exists
+
+  - it: should render fromNetworkLabels ingress rule with ports
+    set:
+      preset:
+        ingress:
+          fromNetworkLabels:
+            - label: custom.network/identifier
+              ports:
+                - 1234
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  custom.network/identifier: egress
+                matchExpressions:
+                  - key: io.kubernetes.pod.namespace
+                    operator: Exists
+            toPorts:
+              - ports:
+                  - port: 1234
+
+  - it: should render toNetworkLabels egress rule with ports
+    set:
+      preset:
+        egress:
+          toNetworkLabels:
+            - label: custom.network/identifier
+              ports:
+                - 5678
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  custom.network/identifier: ingress
+                matchExpressions:
+                  - key: io.kubernetes.pod.namespace
+                    operator: Exists
+            toPorts:
+              - ports:
+                  - port: 5678
