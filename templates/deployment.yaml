@@ -269,7 +269,7 @@ spec:
           nfs:
             server: {{ .nfs.server }}
             path: {{ .nfs.path }}
-          {{- else if .emptyDir }}
+          {{- else if hasKey . "emptyDir" }}
           emptyDir:
             {{- if .emptyDir.sizeLimit }}
             sizeLimit: {{ .emptyDir.sizeLimit }}
