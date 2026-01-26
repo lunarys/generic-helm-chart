@@ -327,20 +327,33 @@ extraConfig:
   # -- Possibility to add additional [secrets](https://kubernetes.io/docs/concepts/configuration/secret/) as `envFrom` to your application.
   # Specify the name of the secret that you want to mount. The secret must already exist in the namespace.
   # example:
-  # ```	
-  # - name: my-secret
+  # ```
+  # - my-secret
   # ```
   secrets: []
-  # - name: my-secret # name of the secret that you want to mount, must already exist
+  # - my-secret # name of the secret that you want to mount, must already exist
 
   # -- Possibility to add additional [configmaps](https://kubernetes.io/docs/concepts/configuration/configmap/) as `envFrom` to your application.
   # Specify the name of the configmap that you want to mount. The configmap must already exist in the namespace.
   # example:
   # ```
-  # - name: my-configmap
+  # - my-configmap
   # ```
   configmaps: []
-  # - name: my-configmap # name of the configmap that you want to mount, must already exist
+  # - my-configmap # name of the configmap that you want to mount, must already exist
+
+  # -- Advanced envFrom configuration for cases requiring optional or prefix settings.
+  # For simple cases, use `secrets` or `configmaps` arrays above.
+  # example:
+  # ```
+  # - secretRef:
+  #     name: my-secret
+  #     optional: true
+  # - configMapRef:
+  #     name: my-config
+  #     prefix: APP_
+  # ```
+  envFrom: []
 
   # -- Possibility to add additional [volumemounts](https://kubernetes.io/docs/concepts/storage/volumes/) to your application.
   # Either specify a secretName or a configMap with items or nfs. have a look at the values.yaml below for examples.

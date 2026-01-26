@@ -374,3 +374,128 @@ tests:
           content:
             configMapRef:
               name: feature-flags
+
+  - it: should render advanced envFrom with optional flag
+    set:
+      externalsecrets:
+        enabled: false
+      extraConfig:
+        secrets: []
+        configmaps: []
+        envFrom:
+          - secretRef:
+              name: optional-secret
+              optional: true
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: optional-secret
+              optional: true
+
+  - it: should render advanced envFrom with prefix
+    set:
+      externalsecrets:
+        enabled: false
+      extraConfig:
+        secrets: []
+        configmaps: []
+        envFrom:
+          - configMapRef:
+              name: app-config
+              prefix: APP_
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: app-config
+              prefix: APP_
+
+  - it: should render multiple advanced envFrom entries
+    set:
+      externalsecrets:
+        enabled: false
+      extraConfig:
+        secrets: []
+        configmaps: []
+        envFrom:
+          - secretRef:
+              name: optional-secret
+              optional: true
+          - configMapRef:
+              name: app-config
+              prefix: APP_
+          - secretRef:
+              name: required-secret
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 3
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: optional-secret
+              optional: true
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: app-config
+              prefix: APP_
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: required-secret
+
+  - it: should combine simple and advanced envFrom
+    set:
+      externalsecrets:
+        enabled: false
+      extraConfig:
+        secrets:
+          - simple-secret
+        configmaps:
+          - simple-configmap
+        envFrom:
+          - secretRef:
+              name: advanced-secret
+              optional: true
+          - configMapRef:
+              name: advanced-config
+              prefix: ADV_
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].envFrom
+          count: 4
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: simple-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: simple-configmap
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: advanced-secret
+              optional: true
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: advanced-config
+              prefix: ADV_
