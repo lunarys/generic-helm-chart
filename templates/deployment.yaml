@@ -199,28 +199,10 @@ spec:
               {{- end }}
             {{- end }}
             {{- if .Values.smbstorage.enabled }}
-            {{- range $volumeName, $volume := .Values.smbstorage.volumes }}
-            {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
-            - name: {{ printf "smb-%s" $volumeName }}
-              mountPath: {{ $volume.mount.path }}
-              readOnly: {{ $volume.mount.readonly | default false }}
-              {{- if $volume.mount.subPath }}
-              subPath: {{ $volume.mount.subPath }}
-              {{- end }}
-            {{- end }}
-            {{- end }}
+            {{- include "smbstorage.volumeMounts" .Subcharts.smbstorage | nindent 12 }}
             {{- end }}
             {{- if .Values.longhornstorage.enabled }}
-            {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
-            {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
-            - name: {{ printf "longhorn-%s" $volumeName }}
-              mountPath: {{ $volume.mount.path | required (printf "longhornstorage.volumes.%s.mount.path is required" $volumeName) }}
-              readOnly: {{ $volume.mount.readonly | default false }}
-              {{- if $volume.mount.subPath }}
-              subPath: {{ $volume.mount.subPath }}
-              {{- end }}
-            {{- end }}
-            {{- end }}
+            {{- include "longhornstorage.volumeMounts" .Subcharts.longhornstorage | nindent 12 }}
             {{- end }}
             {{- if and .Values.config.enabled .Values.config.values (or .Values.config.mount.path .Values.config.mount.subPath) }}
             - name: config-values-mount-via-{{ if .Values.config.mount.subPath }}sub{{ end }}path
@@ -286,22 +268,10 @@ spec:
         {{- end }}
         {{- end }}
         {{- if .Values.smbstorage.enabled }}
-        {{- range $volumeName, $volume := .Values.smbstorage.volumes }}
-        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) }}
-        - name: {{ printf "smb-%s" $volumeName }}
-          persistentVolumeClaim:
-            claimName: {{ (($volume.pvc).name) | default (printf "%s-%s-pvc-smb" $.Release.Name $volumeName) }}
-        {{- end }}
-        {{- end }}
+        {{- include "smbstorage.volumes" .Subcharts.smbstorage | nindent 8 }}
         {{- end }}
         {{- if .Values.longhornstorage.enabled }}
-        {{- range $volumeName, $volume := .Values.longhornstorage.volumes }}
-        {{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) }}
-        - name: {{ printf "longhorn-%s" $volumeName }}
-          persistentVolumeClaim:
-            claimName: {{ $volume.name | default (printf "%s-%s-pvc" $.Release.Name $volumeName) }}
-        {{- end }}
-        {{- end }}
+        {{- include "longhornstorage.volumes" .Subcharts.longhornstorage | nindent 8 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

@@ -59,3 +59,38 @@ Generate SMB source URI for a volume
 {{- printf "//%s/%s" $volume.smb.host $volume.smb.share -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Generate volumeMounts for enabled SMB volumes
+Usage in parent/cronjob chart: {{ include "smbstorage.volumeMounts" .Subcharts.smbstorage | nindent 12 }}
+*/}}
+{{- define "smbstorage.volumeMounts" -}}
+{{- if .Values.enabled }}
+{{- range $volumeName, $volume := .Values.volumes }}
+{{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) $volume.mount $volume.mount.path (or (not (hasKey $volume.mount "enabled")) $volume.mount.enabled) }}
+- name: {{ printf "smb-%s" $volumeName }}
+  mountPath: {{ $volume.mount.path }}
+  {{- if $volume.mount.subPath }}
+  subPath: {{ $volume.mount.subPath }}
+  {{- end }}
+  readOnly: {{ $volume.mount.readonly | default false }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate volume definitions for enabled SMB volumes
+Usage in parent/cronjob chart: {{ include "smbstorage.volumes" .Subcharts.smbstorage | nindent 8 }}
+*/}}
+{{- define "smbstorage.volumes" -}}
+{{- if .Values.enabled }}
+{{- range $volumeName, $volume := .Values.volumes }}
+{{- if and (or (not (hasKey $volume "enabled")) $volume.enabled) }}
+- name: {{ printf "smb-%s" $volumeName }}
+  persistentVolumeClaim:
+    claimName: {{ include "smbstorage.pvcName" (dict "volume" $volume "volumeName" $volumeName "Release" $.Release) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
