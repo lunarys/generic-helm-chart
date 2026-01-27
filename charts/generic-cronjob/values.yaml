@@ -1,0 +1,206 @@
+enabled: true
+
+# -- Override the chart name for the CronJob
+nameOverride: ""
+# -- Override the full name for the CronJob
+fullnameOverride: ""
+
+# -- The schedule in Cron format, see https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule
+schedule: "0 * * * *"
+# -- The time zone for the CronJob schedule (e.g., "Europe/Berlin"). Requires Kubernetes 1.24+.
+timeZone: "Europe/Berlin"
+# -- Specifies how to treat concurrent executions of a Job. Valid values: Allow, Forbid, Replace
+concurrencyPolicy: "Forbid"
+# -- Suspend subsequent executions
+suspend: false
+# -- Deadline (in seconds) for starting the job if it misses scheduled time
+startingDeadlineSeconds: ""
+# -- Number of successful finished jobs to retain
+successfulJobsHistoryLimit: 3
+# -- Number of failed finished jobs to retain
+failedJobsHistoryLimit: 5
+
+# -- Container image settings
+image:
+  registry: ""
+  repository: ""
+  name: ""
+  tag: ""
+  pullPolicy: "IfNotPresent"
+  command: []
+  args: []
+
+# -- Image pull secrets
+imagePullSecrets: []
+
+# -- CronJob annotations
+annotations: {}
+# -- Pod annotations
+podAnnotations: {}
+
+# -- Pod security context
+podSecurityContext: {}
+# -- Use podSecurityContextPreset if podSecurityContext is not set
+usePodSecurityContextPreset: true
+podSecurityContextPreset:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context
+containerSecurityContext: {}
+# -- Use containerSecurityContextPreset if containerSecurityContext is not set
+useContainerSecurityContextPreset: true
+containerSecurityContextPreset:
+  allowPrivilegeEscalation: false
+  privileged: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+# -- Resource requests and limits
+resources:
+  limits:
+    cpu: ""
+    memory: ""
+  requests:
+    cpu: ""
+    memory: ""
+
+# -- Node selector for pod assignment
+nodeSelector: {}
+# -- Tolerations for pod assignment
+tolerations: []
+# -- Affinity for pod assignment
+affinity: {}
+
+# -- Environment variables
+env: {}
+
+# -- Configuration file settings
+# @default -- see below
+config:
+  # -- Enable or disable the configmap creation
+  enabled: false
+  # -- Overwrite the default name of the configmap
+  name: ""
+  # -- Specify how to mount the values
+  mount:
+    # -- Add the key-value pairs from the config as environment variables
+    env: false
+    # -- Mount the config as files in the container
+    path: ""
+    # -- Assuming there is only one config file, mount its content directly into the specified path without creating a directory
+    subPath: ""
+  # -- Key-value pairs for configuration
+  values: {}
+
+# -- Extra config for envFrom, secrets, configmaps, volumeMounts
+extraConfig:
+  # -- List of secret names to load as environment variables via envFrom
+  secrets: []
+  # - my-secret-name
+
+  # -- List of configmap names to load as environment variables via envFrom
+  configmaps: []
+  # - my-configmap-name
+
+  # -- Advanced envFrom configuration for cases requiring optional or prefix settings
+  # For simple cases, use secrets or configmaps arrays above
+  envFrom: []
+  # - secretRef:
+  #     name: my-secret
+  #     optional: true
+  # - configMapRef:
+  #     name: my-config
+  #     prefix: APP_
+
+  # -- Volume mounts for the container
+  # Either specify a secretName or a configMap with items or nfs. Includes a volume definition, unless `existingVolume` is set.
+  volumeMounts: []
+    # --- required config for all variants ---:
+    #- name: "" # choose a name of the volume
+    #  mountPath: "" # path where you want the volume to be mounted in the container
+    #  readOnly: false # whether the volume is read-only or not
+    #  subPath: "" # optional subPath
+
+    # --- optional ---
+    #  existingVolume: false # if true, volume definition won't be auto-created
+
+    # --- either `secretName` or `configMap` with items or `nfs` or `hostPath` or `emptyDir` or `pvc` ---:
+
+    ### configMap mount
+    #  configMap: "" # name of the configMap
+    #  items: # list of items in the configMap that you want to mount
+    #  - key: "" # key in the configMap
+    #    path: "" # path where you want the item to be mounted (relative to mountPath)
+
+    ### secret mount
+    #  secretName: "" # name of the secret
+    #  items: # optional list of items
+    #  - key: ""
+    #    path: ""
+
+    ### nfs mount
+    #  nfs:
+    #    server: "" # NFS server address
+    #    path: "" # NFS export path
+    #    readOnly: false
+
+    ### hostPath mount
+    #  hostPath:
+    #    path: "" # path on the host
+    #    type: "" # optional type (e.g., Directory, File)
+
+    ### emptyDir mount
+    #  emptyDir: {} # or with optional properties:
+    #  # emptyDir:
+    #  #   sizeLimit: "1Gi"
+    #  #   medium: "Memory"
+
+    ### PVC mount
+    #  pvc: "" # name of the PVC
+
+# -- ExternalSecrets integration (separate from parent chart)
+externalsecrets:
+  secrets: {}
+    # my-secret:
+    #   enabled: true
+    #   name: "" # optional custom name
+    #   mount:
+    #     env: true
+
+# -- NetworkPolicy for the CronJob pod
+networkpolicy:
+  enabled: true # TODO
+  preset:
+    useChartEndpointSelector: true # TODO
+
+
+# -- SMB storage subchart configuration (inherits from parent chart)
+smbstorage:
+  enabled: false
+
+# -- Longhorn storage subchart configuration (inherits from parent chart)
+longhornstorage:
+  enabled: false
+
+# -- Termination grace period for the pod (seconds)
+terminationGracePeriodSeconds: ""
+
+# -- Job spec fields
+backoffLimit: 4
+completions: ""
+parallelism: ""
+activeDeadlineSeconds: ""
+ttlSecondsAfterFinished: ""
+restartPolicy: "Never" # Valid: Never, OnFailure
+
+# -- Init containers
+initContainers: []
+# -- Sidecar containers
+sidecars: []

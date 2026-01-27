@@ -1,0 +1,235 @@
+suite: Test CronJob Volumes Configuration
+
+templates:
+  - cronjob.yaml
+
+tests:
+  # ConfigMap volume tests
+  - it: should auto-create volume for configMap mount
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: config
+            mountPath: /etc/config
+            configMap: my-config
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].name
+          value: "config"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: "/etc/config"
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].name
+          value: "config"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].configMap.name
+          value: "my-config"
+
+  - it: should render configMap with items
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: config
+            mountPath: /etc/config
+            configMap: my-config
+            items:
+              - key: app.conf
+                path: application.conf
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].configMap.items
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].configMap.items[0].key
+          value: "app.conf"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].configMap.items[0].path
+          value: "application.conf"
+
+  # Secret volume tests
+  - it: should auto-create volume for secret mount
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: secret
+            mountPath: /etc/secret
+            secretName: my-secret
+            readOnly: true
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].readOnly
+          value: true
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].secret.secretName
+          value: "my-secret"
+
+  - it: should render secret with items
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: secret
+            mountPath: /etc/secret
+            secretName: my-secret
+            items:
+              - key: password
+                path: db-password
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].secret.items
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].secret.items[0].key
+          value: "password"
+
+  # EmptyDir volume tests
+  - it: should auto-create emptyDir volume
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: temp
+            mountPath: /tmp/data
+            emptyDir: {}
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].name
+          value: "temp"
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].emptyDir
+
+  # PVC volume tests
+  - it: should auto-create PVC volume
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: data
+            mountPath: /data
+            pvc: my-pvc
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].persistentVolumeClaim.claimName
+          value: "my-pvc"
+
+  # NFS volume tests
+  - it: should auto-create NFS volume
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: nfs-data
+            mountPath: /mnt/nfs
+            nfs:
+              server: nfs.example.com
+              path: /exports/data
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].nfs.server
+          value: "nfs.example.com"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].nfs.path
+          value: "/exports/data"
+
+  # HostPath volume tests
+  - it: should auto-create hostPath volume
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: host-data
+            mountPath: /host/data
+            hostPath:
+              path: /var/lib/data
+              type: Directory
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].hostPath.path
+          value: "/var/lib/data"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].hostPath.type
+          value: "Directory"
+
+  # SubPath tests
+  - it: should render subPath in volumeMount
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: data
+            mountPath: /data/logs
+            subPath: logs
+            emptyDir: {}
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].subPath
+          value: "logs"
+
+  # Existing volume tests
+  - it: should not auto-create volume when existingVolume is true
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: existing
+            mountPath: /mnt/existing
+            existingVolume: true
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          count: 1
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          count: 0
+
+  # Multiple volumes tests
+  - it: should handle multiple volumeMounts with different types
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: config
+            mountPath: /etc/config
+            configMap: my-config
+          - name: secrets
+            mountPath: /etc/secrets
+            secretName: my-secret
+          - name: data
+            mountPath: /data
+            emptyDir: {}
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          count: 3
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          count: 3
+
+  # ReadOnly default test
+  - it: should default readOnly to false
+    set:
+      extraConfig:
+        volumeMounts:
+          - name: data
+            mountPath: /data
+            emptyDir: {}
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].readOnly
+          value: false
+
+  # Empty volumeMounts test
+  - it: should not render volumes or volumeMounts when empty
+    set:
+      extraConfig:
+        volumeMounts: []
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.volumes

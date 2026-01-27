@@ -17,3 +17,7 @@ dependencies:
     version: 0.1.0
   - name: autoscale
     version: 0.1.0
+  - name: generic-cronjob
+    version: 0.1.0
+    alias: cronjob
+    condition: cronjob.enabled  # just make the subchart not render anything when disabled

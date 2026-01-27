@@ -1,0 +1,250 @@
+{{- /*
+  CronJob template for generic-cronjob chart
+  Supports all major CronJob, Job, and Pod fields from values.yaml
+*/ -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "generic-cronjob.fullname" . }}
+  labels:
+    {{- include "generic-cronjob.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  {{- with .Values.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy | quote }}
+  suspend: {{ .Values.suspend | default false }}
+  {{- with .Values.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ . }}
+  {{- end }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.backoffLimit }}
+      {{- with .Values.completions }}
+      completions: {{ . }}
+      {{- end }}
+      {{- with .Values.parallelism }}
+      parallelism: {{ . }}
+      {{- end }}
+      {{- with .Values.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
+      {{- with .Values.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ . }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "generic-cronjob.labels" . | nindent 12 }}
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.terminationGracePeriodSeconds }}
+          terminationGracePeriodSeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          {{- else if .Values.usePodSecurityContextPreset }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContextPreset | nindent 12 }}
+          {{- end }}
+          restartPolicy: {{ .Values.restartPolicy }}
+          {{- if .Values.initContainers }}
+          initContainers:
+            {{- toYaml .Values.initContainers | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: {{ include "generic-cronjob.fullname" . }}
+              image: {{ include "generic-cronjob.image" . }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              {{- if .Values.image.command }}
+              command: {{ toYaml .Values.image.command | nindent 16 }}
+              {{- end }}
+              {{- if .Values.image.args }}
+              args: {{ toYaml .Values.image.args | nindent 16 }}
+              {{- end }}
+              {{- with .Values.resources }}
+              resources:
+                {{- if and .limits (or .limits.memory .limits.cpu) }}
+                limits:
+                  {{- if .limits.memory }}
+                  memory: {{ .limits.memory }}
+                  {{- end }}
+                  {{- if .limits.cpu }}
+                  cpu: {{ .limits.cpu }}
+                  {{- end }}
+                {{- end }}
+                {{- if and .requests (or .requests.memory .requests.cpu) }}
+                requests:
+                  {{- if .requests.memory }}
+                  memory: {{ .requests.memory }}
+                  {{- end }}
+                  {{- if .requests.cpu }}
+                  cpu: {{ .requests.cpu }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+              {{- if .Values.env }}
+              env:
+                {{- range $name, $value := .Values.env }}
+                - name: {{ $name | quote }}
+                  {{- if kindIs "map" $value }}
+                  {{- omit $value "name" | toYaml | nindent 18 }}
+                  {{- else }}
+                  value: {{ $value | toString | quote }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+              envFrom:
+                {{- if and .Values.externalsecrets.enabled .Values.externalsecrets.mount .Values.externalsecrets.mount.env }}
+                - secretRef:
+                    name: {{ .Values.externalsecrets.name | default (printf "%s-cronjob-external-secret" .Release.Name) }}
+                {{- end }}
+                {{- range $key, $value := .Values.externalsecrets.secrets }}
+                {{- if and (or (not (hasKey $value "enabled")) $value.enabled) (or (not (hasKey $value "mount")) $value.mount.env) }}
+                - secretRef:
+                    name: {{ default $key $value.name }}
+                {{- end }}
+                {{- end }}
+                {{- if and .Values.config.enabled .Values.config.values .Values.config.mount.env }}
+                - configMapRef:
+                    name: {{ .Values.config.name | default (printf "%s-config" (include "generic-cronjob.fullname" .)) }}
+                {{- end }}
+                {{- range .Values.extraConfig.secrets }}
+                - secretRef:
+                    name: {{ . }}
+                {{- end }}
+                {{- range .Values.extraConfig.configmaps }}
+                - configMapRef:
+                    name: {{ . }}
+                {{- end }}
+                {{- with .Values.extraConfig.envFrom }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+              {{- if .Values.containerSecurityContext }}
+              securityContext:
+                {{- toYaml .Values.containerSecurityContext | nindent 16 }}
+              {{- else if .Values.useContainerSecurityContextPreset }}
+              securityContext:
+                {{- toYaml .Values.containerSecurityContextPreset | nindent 16 }}
+              {{- end }}
+              {{- if or .Values.extraConfig.volumeMounts (and .Values.config.enabled .Values.config.values (or .Values.config.mount.path .Values.config.mount.subPath)) .Values.smbstorage.enabled .Values.longhornstorage.enabled }}
+              volumeMounts:
+                {{- if and .Values.config.enabled .Values.config.values (or .Values.config.mount.path .Values.config.mount.subPath) }}
+                - name: config-values-mount-via-{{ if .Values.config.mount.subPath }}sub{{ end }}path
+                  mountPath: {{ if .Values.config.mount.path }}{{ .Values.config.mount.path }}{{ else }}{{ .Values.config.mount.subPath }}{{ end }}
+                  {{- if .Values.config.mount.subPath }}
+                  subPath: {{ .Values.config.values | keys | mustFirst }}
+                  {{- end }}
+                  readOnly: true
+                {{- end }}
+                {{- if .Values.smbstorage.enabled }}
+                {{- include "smbstorage.volumeMounts" $.Subcharts.smbstorage | nindent 16 }}
+                {{- end }}
+                {{- if .Values.longhornstorage.enabled }}
+                {{- include "longhornstorage.volumeMounts" $.Subcharts.longhornstorage | nindent 16 }}
+                {{- end }}
+                {{- range .Values.extraConfig.volumeMounts }}
+                - name: {{ .name }}
+                  mountPath: {{ .mountPath }}
+                  readOnly: {{ .readOnly | default false }}
+                  {{- if .subPath }}
+                  subPath: {{ .subPath }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
+            {{- with .Values.sidecars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.extraConfig.volumeMounts (and .Values.config.enabled .Values.config.values (or .Values.config.mount.path .Values.config.mount.subPath)) .Values.smbstorage.enabled .Values.longhornstorage.enabled }}
+          volumes:
+            {{- if and .Values.config.enabled .Values.config.values (or .Values.config.mount.path .Values.config.mount.subPath) }}
+            - name: config-values-mount-via-{{ if .Values.config.mount.subPath }}sub{{ end }}path
+              configMap:
+                name: {{ .Values.config.name | default (printf "%s-config" (include "generic-cronjob.fullname" .)) }}
+              {{- if .Values.config.mount.subPath }}
+                items:
+                  - key: {{ .Values.config.values | keys | mustFirst }}
+                    path: {{ .Values.config.values | keys | mustFirst }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.smbstorage.enabled }}
+            {{- include "smbstorage.volumes" $.Subcharts.smbstorage | nindent 12 }}
+            {{- end }}
+            {{- if .Values.longhornstorage.enabled }}
+            {{- include "longhornstorage.volumes" $.Subcharts.longhornstorage | nindent 12 }}
+            {{- end }}
+            {{- range .Values.extraConfig.volumeMounts }}
+            {{- if not .existingVolume }}
+            - name: {{ .name }}
+              {{- if .hostPath }}
+              hostPath:
+                path: {{ .hostPath.path }}
+                {{- if .hostPath.type }}
+                type: {{ .hostPath.type | quote }}
+                {{- end }}
+              {{- else if or .configMap .secretName }}
+              {{- if .secretName }}
+              secret:
+                secretName: {{ .secretName }}
+              {{- else if .configMap }}
+              configMap:
+                name: {{ .configMap }}
+              {{- end }}
+                {{- if .items }}
+                items:
+                  {{- range $v := .items }}
+                  - key: {{ $v.key }}
+                    path: {{ $v.path }}
+                  {{- end }}
+                {{- end }}
+              {{- else if .nfs }}
+              nfs:
+                server: {{ .nfs.server }}
+                path: {{ .nfs.path }}
+                {{- if .nfs.readOnly }}
+                readOnly: {{ .nfs.readOnly }}
+                {{- end }}
+              {{- else if hasKey . "emptyDir" }}
+              emptyDir:
+                {{- if .emptyDir.sizeLimit }}
+                sizeLimit: {{ .emptyDir.sizeLimit }}
+                {{- end }}
+                {{- if .emptyDir.medium }}
+                medium: {{ .emptyDir.medium }}
+                {{- end }}
+              {{- else if .pvc }}
+              persistentVolumeClaim:
+                claimName: {{ .pvc }}
+              {{- else }}
+                {{- fail "Neither hostPath, secretName, configMap, nfs nor emptyDir or pvc is defined as volume. Maybe use 'existingVolume: true'?" -}}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

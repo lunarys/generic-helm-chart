@@ -1,0 +1,218 @@
+suite: Test CronJob Pod Configuration
+
+templates:
+  - cronjob.yaml
+
+tests:
+  # Annotations tests
+  - it: should render CronJob annotations separately from pod annotations
+    set:
+      annotations:
+        cronjob-annotation: "cronjob-value"
+      podAnnotations:
+        pod-annotation: "pod-value"
+    asserts:
+      - equal:
+          path: metadata.annotations.cronjob-annotation
+          value: "cronjob-value"
+      - notExists:
+          path: metadata.annotations.pod-annotation
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations.pod-annotation
+          value: "pod-value"
+      - notExists:
+          path: spec.jobTemplate.spec.template.metadata.annotations.cronjob-annotation
+
+  - it: should not render CronJob annotations when empty
+    set:
+      annotations: {}
+    asserts:
+      - notExists:
+          path: metadata.annotations
+
+  - it: should not render pod annotations when empty
+    set:
+      podAnnotations: {}
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.metadata.annotations
+
+  # Pod security context tests
+  - it: should render pod security context preset by default
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.securityContext
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.securityContext.runAsUser
+          value: 1000
+
+  - it: should render custom pod security context
+    set:
+      podSecurityContext:
+        runAsUser: 2000
+        fsGroup: 3000
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.securityContext.fsGroup
+          value: 3000
+
+  - it: should not render pod security context when disabled
+    set:
+      usePodSecurityContextPreset: false
+      podSecurityContext: {}
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.securityContext
+
+  # Node selector tests
+  - it: should render node selector
+    set:
+      nodeSelector:
+        disktype: ssd
+        environment: production
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector.disktype
+          value: "ssd"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector.environment
+          value: "production"
+
+  - it: should not render node selector when empty
+    set:
+      nodeSelector: {}
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
+
+  # Tolerations tests
+  - it: should render tolerations
+    set:
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "special"
+          operator: "Equal"
+          value: "true"
+          effect: "NoExecute"
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.tolerations
+          count: 2
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.tolerations
+          content:
+            key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+  - it: should not render tolerations when empty
+    set:
+      tolerations: []
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.tolerations
+
+  # Affinity tests
+  - it: should render affinity
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - node-1
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.affinity.nodeAffinity
+
+  - it: should not render affinity when empty
+    set:
+      affinity: {}
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.affinity
+
+  # Termination grace period tests
+  - it: should render termination grace period when set
+    set:
+      terminationGracePeriodSeconds: 60
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+
+  - it: should not render termination grace period when empty
+    set:
+      terminationGracePeriodSeconds: ""
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.terminationGracePeriodSeconds
+
+  # Image pull secrets tests
+  - it: should render image pull secrets
+    set:
+      imagePullSecrets:
+        - name: my-registry-secret
+        - name: another-secret
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.imagePullSecrets
+          count: 2
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.imagePullSecrets
+          content:
+            name: my-registry-secret
+
+  - it: should not render image pull secrets when empty
+    set:
+      imagePullSecrets: []
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.imagePullSecrets
+
+  # Init containers tests
+  - it: should render init containers
+    set:
+      initContainers:
+        - name: init-db
+          image: busybox
+          command: ["sh", "-c", "until nc -z db 5432; do sleep 1; done"]
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.initContainers
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.initContainers[0].name
+          value: "init-db"
+
+  - it: should not render init containers when empty
+    set:
+      initContainers: []
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.initContainers
+
+  # Sidecar containers tests
+  - it: should render sidecar containers
+    set:
+      sidecars:
+        - name: log-forwarder
+          image: fluentd
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers
+          count: 2
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[1].name
+          value: "log-forwarder"
