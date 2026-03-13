@@ -96,9 +96,7 @@ jobs:
         run: |
           SEMVER="${{ needs.release.outputs.new_release_version }}"
           cd "${{ matrix.chart.path }}"
-          helm package . \
-            --version "$SEMVER" \
-            --app-version "$SEMVER"
+          helm package . --version "$SEMVER"
           helm push "${{ matrix.chart.name }}-${SEMVER}.tgz" \
             oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
           echo "✅ Published: oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/${{ matrix.chart.name }}:${SEMVER}"
