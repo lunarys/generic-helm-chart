@@ -26,6 +26,10 @@ global:
       externalClusterIssuer: ""
       # -- Generic fallback ClusterIssuer when neither internalClusterIssuer nor externalClusterIssuer is set.
       clusterIssuer: ""
+    traefik:
+      # -- Default Traefik middleware name for the internal access allowlist.
+      # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
+      internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
 
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
@@ -138,9 +142,10 @@ ingress:
   # @default -- The port of the default service.
   servicePort: ""
 
-  # -- Internal access allowlist middleware name, deployed separately and centrally.
-  # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
-  internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
+  traefik:
+    # -- Internal access allowlist middleware name override. Falls back to global.baseSettings.traefik.internalAccessAllowListName.
+    # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
+    internalAccessAllowListName: ""
 
   # -- TLS settings for the internal ingress.
   tls:

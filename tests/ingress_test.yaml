@@ -244,7 +244,7 @@ tests:
       service.name: test-service
       service.port: 8080
       ingress.host: test.example.com
-      ingress.internalAccessAllowListName: "custom-allowlist@kubernetescrd"
+      ingress.traefik.internalAccessAllowListName: "custom-allowlist@kubernetescrd"
     asserts:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
@@ -254,10 +254,36 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: test.example.com
-      ingress.internalAccessAllowListName: ""
+      ingress.traefik.internalAccessAllowListName: ""
+      global.baseSettings.traefik.internalAccessAllowListName: ""
     asserts:
       - notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: should use global.baseSettings.traefik.internalAccessAllowListName when ingress override not set
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: test.example.com
+      global.baseSettings.traefik.internalAccessAllowListName: "custom-ns-allowlist@kubernetescrd"
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "custom-ns-allowlist@kubernetescrd"
+
+  - it: should prefer ingress.traefik.internalAccessAllowListName over global baseSettings
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: test.example.com
+      ingress.traefik.internalAccessAllowListName: "override-allowlist@kubernetescrd"
+      global.baseSettings.traefik.internalAccessAllowListName: "default-allowlist@kubernetescrd"
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "override-allowlist@kubernetescrd"
 
   - it: should use default ingress.path and ingress.pathType if not set
     set:
