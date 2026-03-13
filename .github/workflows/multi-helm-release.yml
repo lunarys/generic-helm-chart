@@ -52,13 +52,13 @@ jobs:
 
           if [ -f "Chart.yaml" ]; then
             name=$(yq eval '.name' Chart.yaml)
-            charts_json=$(echo "$charts_json" | jq --arg name "$name" '. + [{"name": $name, "path": "."}]')
+            charts_json=$(echo "$charts_json" | jq -c --arg name "$name" '. + [{"name": $name, "path": "."}]')
           fi
 
           for chart_dir in charts/*/; do
             if [ -f "$chart_dir/Chart.yaml" ]; then
               name=$(yq eval '.name' "$chart_dir/Chart.yaml")
-              charts_json=$(echo "$charts_json" | jq --arg name "$name" --arg path "$chart_dir" '. + [{"name": $name, "path": $path}]')
+              charts_json=$(echo "$charts_json" | jq -c --arg name "$name" --arg path "$chart_dir" '. + [{"name": $name, "path": $path}]')
             fi
           done
 
