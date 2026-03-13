@@ -150,7 +150,7 @@ ingress:
   # -- TLS settings for the internal ingress.
   tls:
     # -- Enable TLS on the internal ingress.
-    enabled: false
+    enabled: true
     # -- cert-manager ClusterIssuer for the internal ingress.
     # Falls back to global.baseSettings.tls.internalClusterIssuer, then global.baseSettings.tls.clusterIssuer.
     clusterIssuer: ""
@@ -165,7 +165,7 @@ ingress:
     # -- TLS settings for the external ingress.
     tls:
       # -- Enable TLS on the external ingress.
-      enabled: false
+      enabled: true
       # -- cert-manager ClusterIssuer for the external ingress.
       # Falls back to global.baseSettings.tls.externalClusterIssuer, then global.baseSettings.tls.clusterIssuer.
       clusterIssuer: ""

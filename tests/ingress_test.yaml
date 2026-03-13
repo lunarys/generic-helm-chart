@@ -356,12 +356,13 @@ tests:
 
   # TLS tests — internal and external are fully independent
 
-  - it: should not add TLS by default
+  - it: should not add TLS when disabled
     templates:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
       ingress.host: test.example.com
+      ingress.tls.enabled: false
     asserts:
       - notExists:
           path: spec.tls
@@ -396,6 +397,7 @@ tests:
       ingress.host: internal.example.com
       ingress.external.enabled: true
       ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: false
     asserts:
       - documentIndex: 1
         notExists:
@@ -433,6 +435,7 @@ tests:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
+      ingress.tls.enabled: false
       ingress.host: internal.example.com
       ingress.external.enabled: true
       ingress.external.host: "external.example.com"
