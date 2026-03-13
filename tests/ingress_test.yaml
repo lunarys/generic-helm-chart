@@ -9,7 +9,7 @@ set:
     port: 8080
 
 tests:
-  - it: should render an Ingress resource when enabled
+  - it: should render an internal Ingress resource when enabled
     templates:
       - templates/ingress.yaml
     set:
@@ -22,7 +22,7 @@ tests:
           of: Ingress
       - equal:
           path: metadata.name
-          value: RELEASE-NAME
+          value: RELEASE-NAME-internal
       - equal:
           path: spec.rules[0].host
           value: test.example.com
@@ -65,7 +65,7 @@ tests:
       - notExists:
           path: spec.ingressClassName
 
-  - it: should use service port not specified
+  - it: should use service port when explicit servicePort not specified
     templates:
       - templates/ingress.yaml
     set:
@@ -76,18 +76,22 @@ tests:
           path: spec.rules[0].http.paths[0].backend.service.port.number
           value: 8080
 
-  - it: should render external host rule when externalAccessAllowed is true and hosts differ
+  - it: should render two documents when external is enabled
     set:
       ingress.enabled: true
-      ingress.accessControl.externalAccessAllowed: true
-      ingress.accessControl.externalHost: "external.example.com"
-      ingress.accessControl.internalHost: "internal.example.com"
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
     asserts:
-      - equal:
+      - hasDocuments:
+          count: 2
+      - documentIndex: 0
+        equal:
           path: spec.rules[0].host
           value: internal.example.com
-      - equal:
-          path: spec.rules[1].host
+      - documentIndex: 1
+        equal:
+          path: spec.rules[0].host
           value: external.example.com
 
   - it: should configure path and pathType
@@ -124,7 +128,7 @@ tests:
           path: spec.rules[0].http.paths[0].pathType
           value: Prefix
 
-  - it: should add custom annotations
+  - it: should add custom annotations to internal ingress
     templates:
       - templates/ingress.yaml
     set:
@@ -143,7 +147,7 @@ tests:
           path: metadata.annotations["another.annotation"]
           value: another-value
 
-  - it: should add middleware annotation for internal access by default
+  - it: should add middleware annotation to internal ingress by default
     templates:
       - templates/ingress.yaml
     set:
@@ -156,20 +160,7 @@ tests:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: "traefik-common-internal-access-allowlist@kubernetescrd"
 
-  - it: should not add middleware annotation when external access is allowed
-    templates:
-      - templates/ingress.yaml
-    set:
-      ingress.enabled: true
-      service.name: test-service
-      service.port: 8080
-      ingress.host: test.example.com
-      ingress.accessControl.externalAccessAllowed: true
-    asserts:
-      - notExists:
-          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-
-  - it: should create external host rule when external access is allowed and hosts differ
+  - it: should add middleware on internal ingress and not on external ingress
     templates:
       - templates/ingress.yaml
     set:
@@ -177,34 +168,46 @@ tests:
       service.name: test-service
       service.port: 8080
       ingress.host: internal.example.com
-      ingress.accessControl.externalAccessAllowed: true
-      ingress.accessControl.externalHost: external.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
     asserts:
-      - equal:
-          path: spec.rules[0].host
-          value: internal.example.com
-      - equal:
-          path: spec.rules[1].host
-          value: external.example.com
-      - equal:
-          path: spec.rules[1].http.paths[0].backend.service.name
-          value: test-service
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "traefik-common-internal-access-allowlist@kubernetescrd"
+      - documentIndex: 1
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
 
-  - it: should not create external host rule when external access is allowed but hosts are same
+  - it: should create external ingress with correct service on both ingresses
     templates:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
       service.name: test-service
       service.port: 8080
-      ingress.host: same.example.com
-      ingress.accessControl.externalAccessAllowed: true
-      ingress.accessControl.externalHost: same.example.com
-      ingress.accessControl.internalHost: same.example.com
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
     asserts:
-      - lengthEqual:
-          path: spec.rules
-          count: 1
+      - hasDocuments:
+          count: 2
+      - documentIndex: 0
+        equal:
+          path: spec.rules[0].host
+          value: internal.example.com
+      - documentIndex: 1
+        equal:
+          path: spec.rules[0].host
+          value: external.example.com
+      - documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: test-service
+      - documentIndex: 1
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: test-service
 
   - it: should use global ingress host when local host not set
     templates:
@@ -233,7 +236,7 @@ tests:
           path: spec.rules[0].host
           value: local.example.com
 
-  - it: should use custom internal access allowlist name
+  - it: should use custom internalAccessAllowListName
     templates:
       - templates/ingress.yaml
     set:
@@ -241,22 +244,22 @@ tests:
       service.name: test-service
       service.port: 8080
       ingress.host: test.example.com
-      ingress.accessControl.internalAccessAllowListName: "custom-allowlist@kubernetescrd"
+      ingress.internalAccessAllowListName: "custom-allowlist@kubernetescrd"
     asserts:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: "custom-allowlist@kubernetescrd"
 
-  - it: should not set middlewares annotation when external access is allowed and no other middlewares
+  - it: should not set middlewares annotation when internalAccessAllowListName is empty
     set:
       ingress.enabled: true
-      ingress.accessControl.externalAccessAllowed: true
-      ingress.accessControl.internalAccessAllowListName: ""
+      ingress.host: test.example.com
+      ingress.internalAccessAllowListName: ""
     asserts:
       - notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
 
-  - it: should use default ingress.path and ingress.pathType if not set  
+  - it: should use default ingress.path and ingress.pathType if not set
     set:
       ingress.enabled: true
     asserts:
@@ -266,3 +269,242 @@ tests:
       - equal:
           path: spec.rules[0].http.paths[0].pathType
           value: Prefix
+
+  # External ingress validation
+
+  - it: should fail when external.enabled is true and external.host is empty
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingress.external.host must be set when ingress.external.enabled is true"
+
+  - it: should fail when external.host equals internal host
+    set:
+      ingress.enabled: true
+      ingress.host: same.example.com
+      ingress.external.enabled: true
+      ingress.external.host: same.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingress.external.host must differ from the internal host (ingress.host)"
+
+  # External ingress annotations
+
+  - it: ingress.external.annotations should appear only on the external ingress
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      ingress.external.annotations:
+        external.annotation: "external-value"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["external.annotation"]
+          value: external-value
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["external.annotation"]
+
+  - it: ingress.annotations should not leak into the external ingress
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.annotations:
+        internal.annotation: "internal-value"
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["internal.annotation"]
+          value: internal-value
+      - documentIndex: 1
+        notExists:
+          path: metadata.annotations["internal.annotation"]
+
+  # TLS tests — internal and external are fully independent
+
+  - it: should not add TLS by default
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: test.example.com
+    asserts:
+      - notExists:
+          path: spec.tls
+      - notExists:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+
+  - it: should add TLS to internal ingress when ingress.tls.enabled
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: test.example.com
+      ingress.tls.enabled: true
+      ingress.tls.clusterIssuer: "letsencrypt-prod"
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "letsencrypt-prod"
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: test.example.com
+      - equal:
+          path: spec.tls[0].secretName
+          value: RELEASE-NAME-internal-cert
+
+  - it: should not add TLS to external ingress when only ingress.tls.enabled is set
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.tls.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+    asserts:
+      - documentIndex: 1
+        notExists:
+          path: spec.tls
+      - documentIndex: 1
+        notExists:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+
+  - it: should add TLS to external ingress when ingress.external.tls.enabled
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: true
+      ingress.external.tls.clusterIssuer: "letsencrypt-prod"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "letsencrypt-prod"
+      - documentIndex: 1
+        equal:
+          path: spec.tls[0].hosts[0]
+          value: external.example.com
+      - documentIndex: 1
+        equal:
+          path: spec.tls[0].secretName
+          value: RELEASE-NAME-external-cert
+
+  - it: should not add TLS to internal ingress when only ingress.external.tls.enabled is set
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: true
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: spec.tls
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+
+  - it: should use global.baseSettings.tls.internalClusterIssuer for internal ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: test.example.com
+      ingress.tls.enabled: true
+      global.baseSettings.tls.internalClusterIssuer: "internal-issuer"
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "internal-issuer"
+
+  - it: should use global.baseSettings.tls.externalClusterIssuer for external ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: true
+      global.baseSettings.tls.externalClusterIssuer: "external-issuer"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "external-issuer"
+
+  - it: should use global.baseSettings.tls.clusterIssuer as fallback for internal ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: test.example.com
+      ingress.tls.enabled: true
+      global.baseSettings.tls.internalClusterIssuer: ""
+      global.baseSettings.tls.clusterIssuer: "generic-issuer"
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "generic-issuer"
+
+  - it: should use global.baseSettings.tls.clusterIssuer as fallback for external ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: true
+      global.baseSettings.tls.clusterIssuer: "generic-issuer"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "generic-issuer"
+
+  - it: should allow ingress.tls.clusterIssuer to override global baseSettings for internal ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.tls.enabled: true
+      ingress.tls.clusterIssuer: "chart-internal-issuer"
+      ingress.host: test.example.com
+      global.baseSettings.tls.internalClusterIssuer: "global-internal-issuer"
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "chart-internal-issuer"
+
+  - it: should allow ingress.external.tls.clusterIssuer to override global baseSettings for external ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: true
+      ingress.external.tls.clusterIssuer: "chart-external-issuer"
+      global.baseSettings.tls.externalClusterIssuer: "global-external-issuer"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: "chart-external-issuer"

@@ -1,11 +1,16 @@
 {{- if .Values.ingress.enabled }}
+{{- $ingressName := include "ju-common.ingressName" . }}
+{{- $internalHost := include "ju-common.ingress.internalHost" . }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "ju-common.ingressName" . }}
+  name: {{ $ingressName }}-internal
   annotations:
-    {{- include "ju-common.ingress.middlewares" . | indent 4 }}
+    {{- include "ju-common.ingress.internalMiddlewares" . | indent 4 }}
+    {{- if .Values.ingress.tls.enabled }}
+    cert-manager.io/cluster-issuer: {{ include "ju-common.tls.internalClusterIssuer" . | quote }}
+    {{- end }}
     {{- with .Values.ingress.annotations -}}
     {{-   toYaml . | nindent 4 }}
     {{- end }}
@@ -13,8 +18,14 @@ spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $internalHost }}
+      secretName: {{ $ingressName }}-internal-cert
+  {{- end }}
   rules:
-    - host: {{ include "ju-common.ingress.internalHost" . }}
+    - host: {{ $internalHost }}
       http:
         paths:
           - backend:
@@ -24,16 +35,45 @@ spec:
                   number: {{ .Values.ingress.servicePort | default .Values.service.port }}
             path: {{ .Values.ingress.path }}
             pathType: {{ .Values.ingress.pathType }}
-    {{- if and .Values.ingress.accessControl.externalAccessAllowed (ne (include "ju-common.ingress.externalHost" .) (include "ju-common.ingress.internalHost" .)) }}
-    - host: {{ include "ju-common.ingress.externalHost" . }}
-      http:
-        paths:
-          - backend:
-              service:
-                name: {{ .Values.ingress.serviceName | default (include "ju-common.serviceName" .)  }}
-                port:
-                  number: {{ .Values.ingress.servicePort | default .Values.service.port }}
-            path: {{ .Values.ingress.path }}
-            pathType: {{ .Values.ingress.pathType }}
+{{- if .Values.ingress.external.enabled }}
+  {{- if not .Values.ingress.external.host }}
+    {{- fail "ingress.external.host must be set when ingress.external.enabled is true" }}
+  {{- end }}
+  {{- if eq .Values.ingress.external.host $internalHost }}
+    {{- fail "ingress.external.host must differ from the internal host (ingress.host)" }}
+  {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $ingressName }}-external
+  annotations:
+    {{- if .Values.ingress.external.tls.enabled }}
+    cert-manager.io/cluster-issuer: {{ include "ju-common.tls.externalClusterIssuer" . | quote }}
     {{- end }}
+    {{- with .Values.ingress.external.annotations -}}
+    {{-   toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.external.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.external.host }}
+      secretName: {{ $ingressName }}-external-cert
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.external.host }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ .Values.ingress.serviceName | default (include "ju-common.serviceName" .)  }}
+                port:
+                  number: {{ .Values.ingress.servicePort | default .Values.service.port }}
+            path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
+{{- end }}
 {{- end }}

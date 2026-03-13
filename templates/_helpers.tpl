@@ -7,30 +7,49 @@
 {{- end }}
 
 {{/*
-Ingress middleware annotations (simplified - middleware functionality removed)
+Ingress internal middleware annotation — always applies the internal allowlist, regardless of externalAccessAllowed.
 */}}
-{{- define "ju-common.ingress.middlewares" -}}
-{{- $middlewares := list }}
-{{- if not .Values.ingress.accessControl.externalAccessAllowed }}
-  {{- $middlewares = append $middlewares .Values.ingress.accessControl.internalAccessAllowListName }}
+{{- define "ju-common.ingress.internalMiddlewares" -}}
+{{- if .Values.ingress.internalAccessAllowListName }}
+traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.ingress.internalAccessAllowListName | quote }}
 {{- end }}
-{{- if $middlewares }}
-traefik.ingress.kubernetes.io/router.middlewares: {{ join "," $middlewares | quote }}
 {{- end }}
+
+{{/*
+Resolve cert-manager ClusterIssuer for the internal ingress.
+Resolution order: ingress.tls.clusterIssuer
+  → global.baseSettings.tls.internalClusterIssuer → global.baseSettings.tls.clusterIssuer
+*/}}
+{{- define "ju-common.tls.internalClusterIssuer" -}}
+{{- $bs := (.Values.global.baseSettings | default dict) }}
+{{- $bsTls := (get $bs "tls" | default dict) }}
+{{- coalesce .Values.ingress.tls.clusterIssuer (get $bsTls "internalClusterIssuer") (get $bsTls "clusterIssuer") }}
+{{- end }}
+
+{{/*
+Resolve cert-manager ClusterIssuer for the external ingress.
+Resolution order: ingress.external.tls.clusterIssuer
+  → global.baseSettings.tls.externalClusterIssuer → global.baseSettings.tls.clusterIssuer
+*/}}
+{{- define "ju-common.tls.externalClusterIssuer" -}}
+{{- $bs := (.Values.global.baseSettings | default dict) }}
+{{- $bsTls := (get $bs "tls" | default dict) }}
+{{- $extTls := (.Values.ingress.external.tls | default dict) }}
+{{- coalesce (get $extTls "clusterIssuer") (get $bsTls "externalClusterIssuer") (get $bsTls "clusterIssuer") }}
 {{- end }}
 
 {{/*
 Ingress external host
 */}}
 {{- define "ju-common.ingress.externalHost" -}}
-{{- coalesce .Values.ingress.accessControl.externalHost .Values.ingress.host .Values.global.ingress.host -}}
+{{- .Values.ingress.external.host -}}
 {{- end }}
 
 {{/*
 Ingress internal host
 */}}
 {{- define "ju-common.ingress.internalHost" -}}
-{{- coalesce .Values.ingress.accessControl.internalHost .Values.ingress.host .Values.global.ingress.host -}}
+{{- coalesce .Values.ingress.host .Values.global.ingress.host -}}
 {{- end }}
 
 {{/*

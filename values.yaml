@@ -15,6 +15,18 @@ global:
   # -- Name override that may be used by subcharts, too.
   nameOverride: ""
 
+  # -- Cluster-specific base settings, intended to be set centrally (e.g. via ArgoCD app values)
+  # and move specific settings out of the base chart.
+  # Individual charts can override these via chart-level settings (e.g. ingress.tls.*).
+  baseSettings:
+    tls:
+      # -- Default cert-manager ClusterIssuer for internal ingresses.
+      internalClusterIssuer: "step-ca-internal"
+      # -- Default cert-manager ClusterIssuer for external ingresses.
+      externalClusterIssuer: ""
+      # -- Generic fallback ClusterIssuer when neither internalClusterIssuer nor externalClusterIssuer is set.
+      clusterIssuer: ""
+
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
 # @default -- see below
@@ -126,19 +138,34 @@ ingress:
   # @default -- The port of the default service.
   servicePort: ""
 
-  # -- Access control
-  accessControl:
-    # -- Hostname for external access.
-    # @default -- `ingress.host`
-    externalHost: ""
-    # -- Hostname for internal access.
-    # @default -- `ingress.host`
-    internalHost: ""
-    # -- Whether external should be disabled. Applies the `internalAccessAllowListName` to the ingress.
-    externalAccessAllowed: false
-    # -- Internal access allowlist name, deployed separately and centrally.
-    # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
-    internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
+  # -- Internal access allowlist middleware name, deployed separately and centrally.
+  # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
+  internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
+
+  # -- TLS settings for the internal ingress.
+  tls:
+    # -- Enable TLS on the internal ingress.
+    enabled: false
+    # -- cert-manager ClusterIssuer for the internal ingress.
+    # Falls back to global.baseSettings.tls.internalClusterIssuer, then global.baseSettings.tls.clusterIssuer.
+    clusterIssuer: ""
+
+  # -- Opt-in for a separate external (public) ingress without the internal allowlist.
+  # Deliberately disabled by default — must be an explicit decision.
+  external:
+    # -- Enable the external ingress. Requires `host` to be set and different from `ingress.host`.
+    enabled: false
+    # -- Hostname for the external ingress. Required when enabled; must differ from ingress.host.
+    host: ""
+    # -- TLS settings for the external ingress.
+    tls:
+      # -- Enable TLS on the external ingress.
+      enabled: false
+      # -- cert-manager ClusterIssuer for the external ingress.
+      # Falls back to global.baseSettings.tls.externalClusterIssuer, then global.baseSettings.tls.clusterIssuer.
+      clusterIssuer: ""
+    # -- Annotations for the external ingress only. Does not inherit ingress.annotations.
+    annotations: {}
 
   # -- Custom annotations for the ingress
   annotations: {}
