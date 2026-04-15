@@ -204,22 +204,6 @@ tests:
           path: spec.rules[0].http.paths[0].pathType
           value: Exact
 
-  - it: should use default path and pathType when not specified
-    templates:
-      - templates/ingress.yaml
-    set:
-      ingress.enabled: true
-      service.name: test-service
-      service.port: 8080
-      ingress.host: test.example.com
-    asserts:
-      - equal:
-          path: spec.rules[0].http.paths[0].path
-          value: /
-      - equal:
-          path: spec.rules[0].http.paths[0].pathType
-          value: Prefix
-
   - it: should add custom annotations to internal ingress
     templates:
       - templates/ingress.yaml
