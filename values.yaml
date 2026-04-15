@@ -284,9 +284,14 @@ readinessProbe:
   failureThreshold: 3
 
 
-prometheus: 
-  # -- enables prometheus scrape config by adding prometheus annotations to the pod. Prometheus metrics are exposed via the spring actuator on the `/prometheus` endpoint
-  enabled: true
+prometheus:
+  # -- Enable Prometheus scrape annotations on the pod.
+  enabled: false
+  # -- Scrape path for Prometheus.
+  path: ""
+  # -- Scrape port for Prometheus. Defaults to service.targetPort when empty.
+  # @default -- `service.targetPort`
+  port: ""
   
 
 deployment:

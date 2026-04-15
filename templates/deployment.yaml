@@ -22,8 +22,8 @@ spec:
         {{- include "ju-common.annotations" . | nindent 8 }}
         {{- if .Values.prometheus.enabled }}
         prometheus.io/scrape: 'true'
-        prometheus.io/path: 'todo'
-        prometheus.io/port: 'todo'
+        prometheus.io/path: {{ required "prometheus.path must be set when prometheus.enabled is true" .Values.prometheus.path | quote }}
+        prometheus.io/port: {{ .Values.prometheus.port | default (.Values.service.targetPort | toString) | quote }}
         {{- else }}
         prometheus.io/scrape: 'false'
         {{- end }}

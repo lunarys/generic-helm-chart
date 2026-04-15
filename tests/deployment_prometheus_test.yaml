@@ -1,0 +1,62 @@
+suite: Prometheus scrape annotations
+
+templates:
+  - deployment.yaml
+
+tests:
+  - it: should set scrape false by default
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: 'false'
+      - notExists:
+          path: spec.template.metadata.annotations["prometheus.io/path"]
+      - notExists:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+
+  - it: should fail when prometheus.enabled is true but path is not set
+    set:
+      prometheus.enabled: true
+      service.targetPort: 8080
+    asserts:
+      - failedTemplate:
+          errorMessage: "prometheus.path must be set when prometheus.enabled is true"
+
+  - it: should set scrape annotations when enabled with path
+    set:
+      prometheus.enabled: true
+      prometheus.path: /metrics
+      service.targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: 'true'
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/path"]
+          value: /metrics
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: '8080'
+
+  - it: should use custom port when prometheus.port is set
+    set:
+      prometheus.enabled: true
+      prometheus.path: /metrics
+      prometheus.port: "9090"
+      service.targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: '9090'
+
+  - it: should set scrape false and omit path and port when disabled
+    set:
+      prometheus.enabled: false
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: 'false'
+      - notExists:
+          path: spec.template.metadata.annotations["prometheus.io/path"]
+      - notExists:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
