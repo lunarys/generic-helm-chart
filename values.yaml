@@ -26,10 +26,6 @@ global:
       externalClusterIssuer: ""
       # -- Generic fallback ClusterIssuer when neither internalClusterIssuer nor externalClusterIssuer is set.
       clusterIssuer: ""
-    traefik:
-      # -- Default Traefik middleware name for the internal access allowlist.
-      # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
-      internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
     ingress:
       # -- Default IngressClass for the internal ingress (routed via the internal Traefik instance).
       internalClassName: "traefik"
@@ -148,9 +144,9 @@ ingress:
   servicePort: ""
 
   traefik:
-    # -- Internal access allowlist middleware name override. Falls back to global.baseSettings.traefik.internalAccessAllowListName.
-    # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
-    internalAccessAllowListName: ""
+    # -- Traefik middleware(s) applied to the internal ingress.
+    # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
+    middlewares: ""
 
   # -- TLS settings for the internal ingress.
   tls:
@@ -176,6 +172,10 @@ ingress:
       clusterIssuer: ""
     # -- IngressClass for the external ingress. Falls back to global.baseSettings.ingress.externalClassName.
     className: ""
+    traefik:
+      # -- Traefik middleware(s) applied to the external ingress.
+      # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
+      middlewares: ""
     # -- Annotations for the external ingress only. Does not inherit ingress.annotations.
     annotations: {}
 

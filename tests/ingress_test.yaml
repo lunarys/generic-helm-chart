@@ -223,37 +223,57 @@ tests:
           path: metadata.annotations["another.annotation"]
           value: another-value
 
-  - it: should add middleware annotation to internal ingress by default
+  - it: should not set middleware annotation by default
     templates:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
-      service.name: test-service
-      service.port: 8080
-      ingress.host: test.example.com
-    asserts:
-      - equal:
-          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "traefik-common-internal-access-allowlist@kubernetescrd"
-
-  - it: should add middleware on internal ingress and not on external ingress
-    templates:
-      - templates/ingress.yaml
-    set:
-      ingress.enabled: true
-      service.name: test-service
-      service.port: 8080
       ingress.host: internal.example.com
       ingress.external.enabled: true
       ingress.external.host: "external.example.com"
     asserts:
       - documentIndex: 0
-        equal:
+        notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "traefik-common-internal-access-allowlist@kubernetescrd"
       - documentIndex: 1
         notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: should set middleware on internal ingress only
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.traefik.middlewares: "internal-middleware@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "internal-middleware@kubernetescrd"
+      - documentIndex: 1
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: should set middleware on external ingress only
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: "external.example.com"
+      ingress.external.traefik.middlewares: "external-middleware@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "external-middleware@kubernetescrd"
 
   - it: should create external ingress with correct service on both ingresses
     templates:
@@ -311,55 +331,6 @@ tests:
       - equal:
           path: spec.rules[0].host
           value: local.example.com
-
-  - it: should use custom internalAccessAllowListName
-    templates:
-      - templates/ingress.yaml
-    set:
-      ingress.enabled: true
-      service.name: test-service
-      service.port: 8080
-      ingress.host: test.example.com
-      ingress.traefik.internalAccessAllowListName: "custom-allowlist@kubernetescrd"
-    asserts:
-      - equal:
-          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "custom-allowlist@kubernetescrd"
-
-  - it: should not set middlewares annotation when internalAccessAllowListName is empty
-    set:
-      ingress.enabled: true
-      ingress.host: test.example.com
-      ingress.traefik.internalAccessAllowListName: ""
-      global.baseSettings.traefik.internalAccessAllowListName: ""
-    asserts:
-      - notExists:
-          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-
-  - it: should use global.baseSettings.traefik.internalAccessAllowListName when ingress override not set
-    templates:
-      - templates/ingress.yaml
-    set:
-      ingress.enabled: true
-      ingress.host: test.example.com
-      global.baseSettings.traefik.internalAccessAllowListName: "custom-ns-allowlist@kubernetescrd"
-    asserts:
-      - equal:
-          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "custom-ns-allowlist@kubernetescrd"
-
-  - it: should prefer ingress.traefik.internalAccessAllowListName over global baseSettings
-    templates:
-      - templates/ingress.yaml
-    set:
-      ingress.enabled: true
-      ingress.host: test.example.com
-      ingress.traefik.internalAccessAllowListName: "override-allowlist@kubernetescrd"
-      global.baseSettings.traefik.internalAccessAllowListName: "default-allowlist@kubernetescrd"
-    asserts:
-      - equal:
-          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "override-allowlist@kubernetescrd"
 
   - it: should use default ingress.path and ingress.pathType if not set
     set:

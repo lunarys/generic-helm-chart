@@ -7,7 +7,9 @@ kind: Ingress
 metadata:
   name: {{ $ingressName }}-internal
   annotations:
-    {{- include "ju-common.ingress.internalMiddlewares" . | indent 4 }}
+    {{- if .Values.ingress.traefik.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.ingress.traefik.middlewares | quote }}
+    {{- end }}
     {{- if .Values.ingress.tls.enabled }}
     cert-manager.io/cluster-issuer: {{ include "ju-common.tls.internalClusterIssuer" . | quote }}
     {{- end }}
@@ -49,6 +51,9 @@ kind: Ingress
 metadata:
   name: {{ $ingressName }}-external
   annotations:
+    {{- if .Values.ingress.external.traefik.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.ingress.external.traefik.middlewares | quote }}
+    {{- end }}
     {{- if .Values.ingress.external.tls.enabled }}
     cert-manager.io/cluster-issuer: {{ include "ju-common.tls.externalClusterIssuer" . | quote }}
     {{- end }}

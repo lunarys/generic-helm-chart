@@ -6,18 +6,6 @@
 {{- end }}
 {{- end }}
 
-{{/*
-Ingress internal middleware annotation — always applies the internal allowlist, regardless of externalAccessAllowed.
-Resolution order: ingress.traefik.internalAccessAllowListName → global.baseSettings.traefik.internalAccessAllowListName
-*/}}
-{{- define "ju-common.ingress.internalMiddlewares" -}}
-{{- $bsTraefik := get (.Values.global.baseSettings | default dict) "traefik" | default dict }}
-{{- $ingressTraefik := (.Values.ingress.traefik | default dict) }}
-{{- $name := coalesce (get $ingressTraefik "internalAccessAllowListName") (get $bsTraefik "internalAccessAllowListName") }}
-{{- if $name }}
-traefik.ingress.kubernetes.io/router.middlewares: {{ $name | quote }}
-{{- end }}
-{{- end }}
 
 {{/*
 Resolve cert-manager ClusterIssuer for the internal ingress.
