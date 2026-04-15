@@ -30,6 +30,11 @@ global:
       # -- Default Traefik middleware name for the internal access allowlist.
       # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
       internalAccessAllowListName: "traefik-common-internal-access-allowlist@kubernetescrd"
+    ingress:
+      # -- Default IngressClass for the internal ingress (routed via the internal Traefik instance).
+      internalClassName: "traefik"
+      # -- Default IngressClass for the external ingress (routed via the external Traefik instance).
+      externalClassName: "traefik-external"
 
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
@@ -169,6 +174,8 @@ ingress:
       # -- cert-manager ClusterIssuer for the external ingress.
       # Falls back to global.baseSettings.tls.externalClusterIssuer, then global.baseSettings.tls.clusterIssuer.
       clusterIssuer: ""
+    # -- IngressClass for the external ingress. Falls back to global.baseSettings.ingress.externalClassName.
+    className: ""
     # -- Annotations for the external ingress only. Does not inherit ingress.annotations.
     annotations: {}
 

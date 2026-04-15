@@ -15,8 +15,9 @@ metadata:
     {{-   toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
+  {{- $internalClassName := coalesce .Values.ingress.className (dig "ingress" "internalClassName" "" (.Values.global.baseSettings | default dict)) }}
+  {{- if $internalClassName }}
+  ingressClassName: {{ $internalClassName }}
   {{- end }}
   {{- if .Values.ingress.tls.enabled }}
   tls:
@@ -55,8 +56,9 @@ metadata:
     {{-   toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
+  {{- $externalClassName := coalesce .Values.ingress.external.className (dig "ingress" "externalClassName" "" (.Values.global.baseSettings | default dict)) }}
+  {{- if $externalClassName }}
+  ingressClassName: {{ $externalClassName }}
   {{- end }}
   {{- if .Values.ingress.external.tls.enabled }}
   tls:

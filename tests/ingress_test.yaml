@@ -42,28 +42,120 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: should set ingress class name when specified
+  - it: should set internal ingressClassName from ingress.className
     templates:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
-      ingress.className: "nginx"
+      ingress.className: "custom"
       ingress.host: test.example.com
     asserts:
-      - equal:
+      - documentIndex: 0
+        equal:
           path: spec.ingressClassName
-          value: nginx
+          value: custom
 
-  - it: should not set ingress class name when empty
+  - it: should set internal ingressClassName from global.baseSettings.ingress.internalClassName
     templates:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
-      ingress.className: ""
+      ingress.host: test.example.com
+      global.baseSettings.ingress.internalClassName: "custom"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: spec.ingressClassName
+          value: custom
+
+  - it: should prefer ingress.className over global.baseSettings.ingress.internalClassName
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: "override"
+      ingress.host: test.example.com
+      global.baseSettings.ingress.internalClassName: "default"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: spec.ingressClassName
+          value: override
+
+  - it: should use default internalClassName when ingress.className is not set
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
       ingress.host: test.example.com
     asserts:
-      - notExists:
+      - documentIndex: 0
+        equal:
           path: spec.ingressClassName
+          value: traefik
+
+  - it: should set external ingressClassName from ingress.external.className
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      ingress.external.className: "custom-external"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.ingressClassName
+          value: custom-external
+
+  - it: should set external ingressClassName from global.baseSettings.ingress.externalClassName
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      global.baseSettings.ingress.externalClassName: "custom-external"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.ingressClassName
+          value: custom-external
+
+  - it: should not bleed ingress.className to external ingress
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: "custom-internal"
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: spec.ingressClassName
+          value: custom-internal
+      - documentIndex: 1
+        equal:
+          path: spec.ingressClassName
+          value: traefik-external
+
+  - it: should use default externalClassName when ingress.external.className is not set
+    templates:
+      - templates/ingress.yaml
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.ingressClassName
+          value: traefik-external
 
   - it: should use service port when explicit servicePort not specified
     templates:
