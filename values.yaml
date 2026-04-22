@@ -23,7 +23,7 @@ global:
       # -- Default cert-manager ClusterIssuer for internal ingresses.
       internalClusterIssuer: "step-ca-internal"
       # -- Default cert-manager ClusterIssuer for external ingresses.
-      externalClusterIssuer: ""
+      externalClusterIssuer: "letsencrypt-prod"
       # -- Generic fallback ClusterIssuer when neither internalClusterIssuer nor externalClusterIssuer is set.
       clusterIssuer: ""
     ingress:
