@@ -193,6 +193,9 @@ Networkpolicy labels - Used for simplified networkpolicy handling
   {{- if .Values.networkpolicy.preset.ingress.fromExternalIngressController -}}
     {{- nindent 0 "" }}{{ .Values.networkpolicy.defaults.customExternalIngressNetworkLabel }}: {{ .Values.networkpolicy.defaults.fromNetworkLabelValue }}
   {{- end }}
+  {{- if .Values.networkpolicy.preset.egress.toDefaultPostgresDb -}}
+    {{- nindent 0 "" }}{{ .Values.networkpolicy.defaults.defaultPostgresDbNetworkLabel }}: {{ .Values.networkpolicy.defaults.toNetworkLabelValue }}
+  {{- end }}
 {{- end }}
 {{- end }}
 

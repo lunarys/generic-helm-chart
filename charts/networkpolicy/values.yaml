@@ -25,6 +25,12 @@ defaults:
   customExternalIngressNetworkLabel: "custom.network/external-ingress"
   # -- Namespace of the externally exposed ingress controller.
   externalIngressControllerNamespace: traefik-external
+  # -- Label key to use for allowing egress to the default postgres cluster.
+  defaultPostgresDbNetworkLabel: "custom.network/postgresdb"
+  # -- Namespace of the default postgres cluster.
+  defaultPostgresDbNamespace: cloudnative-pg
+  # -- Port of the default postgres cluster.
+  defaultPostgresDbPort: "5432"
 
 
 # -- Preset configuration for common network policy patterns
@@ -105,6 +111,8 @@ preset:
     # or as objects with `label` and `ports` keys,
     # expecting a label string and port numbers.
     toNetworkLabels: []
+    # -- Allow egress to the default postgres cluster
+    toDefaultPostgresDb: false
     # -- Allow all egress traffic (adds '- {}' rule)
     none: false
     # -- Custom egress rules (array of rule objects)

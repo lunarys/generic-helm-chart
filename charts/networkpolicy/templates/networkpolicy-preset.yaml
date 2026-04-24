@@ -153,6 +153,19 @@ spec:
         - matchName: {{ . | quote }}
         {{- end }}
     {{- end }}
+    {{- if .Values.preset.egress.toDefaultPostgresDb }}
+    - toEndpoints:
+        - matchLabels:
+            {{ .Values.defaults.defaultPostgresDbNetworkLabel }}: {{ .Values.defaults.fromNetworkLabelValue | quote }}
+            {{- if .Values.defaults.defaultPostgresDbNamespace }}
+            io.kubernetes.pod.namespace: {{ .Values.defaults.defaultPostgresDbNamespace }}
+            {{- end }}
+      {{- if .Values.defaults.defaultPostgresDbPort }}
+      toPorts:
+        - ports:
+            - port: {{ .Values.defaults.defaultPostgresDbPort | quote }}
+      {{- end }}
+    {{- end }}
     {{- range $toNetworkLabel := .Values.preset.egress.toNetworkLabels }}
       {{- if kindIs "string" $toNetworkLabel }}
         {{- $toNetworkLabel = dict "label" $toNetworkLabel }}

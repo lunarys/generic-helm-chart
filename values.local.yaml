@@ -101,6 +101,8 @@ networkpolicy:
       fromNetworkLabels:
         - custom.network/identifier
       fromExternalIngressController: true
+    egress:
+      toDefaultPostgresDb: true
 
 update:
   strategy:

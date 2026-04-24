@@ -1,0 +1,32 @@
+suite: Test NetworkPolicy Preset - toDefaultPostgresDb
+
+templates:
+  - networkpolicy-preset.yaml
+
+tests:
+  - it: should not render toDefaultPostgresDb rule when disabled
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  custom.network/postgresdb: ingress
+          any: true
+
+  - it: should render toDefaultPostgresDb egress rule
+    set:
+      preset:
+        egress:
+          toDefaultPostgresDb: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEndpoints:
+              - matchLabels:
+                  custom.network/postgresdb: ingress
+                  io.kubernetes.pod.namespace: cloudnative-pg
+            toPorts:
+              - ports:
+                  - port: "5432"
