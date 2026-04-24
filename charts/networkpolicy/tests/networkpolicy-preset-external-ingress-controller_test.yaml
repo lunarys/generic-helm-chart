@@ -1,0 +1,48 @@
+suite: Test NetworkPolicy Preset - fromExternalIngressController
+
+templates:
+  - networkpolicy-preset.yaml
+
+tests:
+  - it: should not render fromExternalIngressController rule when disabled
+    asserts:
+      - notContains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  custom.network/external-ingress: egress
+          any: true
+
+  - it: should render fromExternalIngressController ingress rule
+    set:
+      preset:
+        ingress:
+          fromExternalIngressController: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  custom.network/external-ingress: egress
+                  io.kubernetes.pod.namespace: traefik-external
+
+  - it: should render fromExternalIngressController ingress rule with ports
+    set:
+      preset:
+        ingress:
+          fromExternalIngressController:
+            ports:
+              - 8080
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  custom.network/external-ingress: egress
+                  io.kubernetes.pod.namespace: traefik-external
+            toPorts:
+              - ports:
+                  - port: "8080"

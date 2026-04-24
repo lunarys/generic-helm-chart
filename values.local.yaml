@@ -51,7 +51,7 @@ service:
 
 
 prometheus: #enables prometheus scrape config
-  enabled: true
+  enabled: false
 
 
 extraConfig:
@@ -100,6 +100,7 @@ networkpolicy:
     ingress:
       fromNetworkLabels:
         - custom.network/identifier
+      fromExternalIngressController: true
 
 update:
   strategy:

@@ -77,6 +77,21 @@ spec:
             {{- end }}
       {{- end }}
     {{- end }}
+    {{- if .Values.preset.ingress.fromExternalIngressController }}
+    - fromEndpoints:
+        - matchLabels:
+            {{ .Values.defaults.customExternalIngressNetworkLabel }}: {{ $.Values.defaults.toNetworkLabelValue | quote }}
+            {{- if .Values.defaults.externalIngressControllerNamespace }}
+            io.kubernetes.pod.namespace: {{ .Values.defaults.externalIngressControllerNamespace }}
+            {{- end }}
+    {{- if and (not (kindIs "bool" .Values.preset.ingress.fromExternalIngressController)) .Values.preset.ingress.fromExternalIngressController.ports }}
+      toPorts:
+        - ports:
+            {{- range $port := .Values.preset.ingress.fromExternalIngressController.ports }}
+            - port: {{ $port | quote }}
+            {{- end }}
+    {{- end }}
+    {{- end }}
     {{- range .Values.preset.ingress.rules }}
     - {{ toYaml . | nindent 6 }}
     {{- end }}

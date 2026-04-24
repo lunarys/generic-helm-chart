@@ -21,6 +21,10 @@ defaults:
   fromNetworkLabelValue: "ingress"
   # -- Value to use for labels that allow egress to other pods.
   toNetworkLabelValue: "egress"
+  # -- Label key to use for allowing ingress from the externally exposed ingress controller.
+  customExternalIngressNetworkLabel: "custom.network/external-ingress"
+  # -- Namespace of the externally exposed ingress controller.
+  externalIngressControllerNamespace: traefik-external
 
 
 # -- Preset configuration for common network policy patterns
@@ -56,6 +60,9 @@ preset:
     fromLocalSubnet: false
     # -- Allow ingress from ingress controller
     fromIngressController: true
+    # -- Allow ingress from the externally exposed ingress controller
+    # Equivalent to `fromNetworkLabels: [custom.network/external-ingress]`, thus needs the label on the pod with value `ingress`.
+    fromExternalIngressController: false
     # -- Allow ingress from the kube API
     # Includes the k8s node and remote nodes, if `defaults.extendedKubeApiIngressRule` is set.
     fromKubeApi: false

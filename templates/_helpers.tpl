@@ -185,11 +185,14 @@ Networkpolicy labels - Used for simplified networkpolicy handling
 {{- define "ju-common.networkpolicyLabels" -}}
 {{- if and .Values.networkpolicy.enabled .Values.networkpolicy.preset.enabled -}}
   {{- range $fromNetworkLabel := .Values.networkpolicy.preset.ingress.fromNetworkLabels -}}
-{{ include "ju-common.networkpolicyLabels.label" $fromNetworkLabel }}: {{ $.Values.networkpolicy.defaults.fromNetworkLabelValue }}
+    {{- nindent 0 "" }}{{ include "ju-common.networkpolicyLabels.label" $fromNetworkLabel }}: {{ $.Values.networkpolicy.defaults.fromNetworkLabelValue }}
   {{- end }}
   {{- range $toNetworkLabel := .Values.networkpolicy.preset.egress.toNetworkLabels -}}
-{{ include "ju-common.networkpolicyLabels.label" $toNetworkLabel }}: {{ $.Values.networkpolicy.defaults.toNetworkLabelValue }}
-  {{- end -}}
+    {{- nindent 0 "" }}{{ include "ju-common.networkpolicyLabels.label" $toNetworkLabel }}: {{ $.Values.networkpolicy.defaults.toNetworkLabelValue }}
+  {{- end }}
+  {{- if .Values.networkpolicy.preset.ingress.fromExternalIngressController -}}
+    {{- nindent 0 "" }}{{ .Values.networkpolicy.defaults.customExternalIngressNetworkLabel }}: {{ .Values.networkpolicy.defaults.fromNetworkLabelValue }}
+  {{- end }}
 {{- end }}
 {{- end }}
 
