@@ -10,8 +10,9 @@ tests:
       extraConfig:
         env: []
     asserts:
-      - notExists:
+      - equal:
           path: spec.template.spec.containers[0].env
+          value: null
 
   - it: should render env section when extraConfig.env is enabled even with empty env
     set:
@@ -294,3 +295,151 @@ tests:
           content:
             name: BOOLEAN_VAR
             value: "true"
+
+  - it: should not render env section from postgresdb when disabled
+    set:
+      postgresdb:
+        enabled: false
+        mount:
+          enabled: true
+          env:
+            username: DB_USER
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env
+          value: null
+
+  - it: should not render env entries from postgresdb when mount.env is empty
+    set:
+      postgresdb:
+        enabled: true
+        mount:
+          enabled: true
+          env: {}
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env
+          value: null
+
+  - it: should not render env entries from postgresdb when mount.enabled is false
+    set:
+      postgresdb:
+        enabled: true
+        mount:
+          enabled: false
+          env:
+            username: DB_USER
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env
+          value: null
+
+  - it: should render env entries from postgresdb mount.env mapping
+    set:
+      postgresdb:
+        enabled: true
+        mount:
+          enabled: true
+          env:
+            username: DB_USER
+            uri: DATABASE_URL
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-pgcreds
+                key: username
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-pgcreds
+                key: uri
+
+  - it: should use custom secretName in postgresdb env mapping
+    set:
+      postgresdb:
+        enabled: true
+        secretName: my-pg-secret
+        mount:
+          enabled: true
+          env:
+            password: DB_PASSWORD
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-pg-secret
+                key: password
+
+  - it: should use nameOverride for secret name resolution in postgresdb env mapping
+    set:
+      postgresdb:
+        enabled: true
+        nameOverride: custom-db
+        mount:
+          enabled: true
+          env:
+            host: DB_HOST
+      env: {}
+      extraConfig:
+        env: []
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                name: custom-db-pgcreds
+                key: host
+
+  - it: should combine postgresdb env mapping with regular env vars
+    set:
+      postgresdb:
+        enabled: true
+        mount:
+          enabled: true
+          env:
+            username: DB_USER
+      env:
+        APP_ENV: production
+      extraConfig:
+        env: []
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_ENV
+            value: production
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-pgcreds
+                key: username

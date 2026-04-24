@@ -453,6 +453,34 @@ serviceAccount:
    # - name: my-custom-external-role
    #   kind: Role / ClusterRole
 
+# -- Postgres database configuration using the [postgresdb-user-operator](https://github.com/lunarys/postgresdb-user-operator).
+# @default -- see below
+postgresdb:
+  # -- Enable or disable creation of a postgres database.
+  enabled: false
+  # -- Override the default name for the postgres database resource.
+  # @default -- `<release-name>`
+  nameOverride: ""
+  # -- Deletion policy for the database when the Helm release is deleted. "Retain" will keep the database (in the postgres server), "Delete" will remove it.
+  deletionPolicy: "Retain" # Retain or Delete
+  # -- Name of the secret where the database credentials will be stored. The secret will be created in the same namespace as the Helm release.
+  # The secret will contain the following keys: `username`, `password`, `host`, `port`, `dbname`, `uri`, `jdbc-uri`, `pgpass`.
+  # @default -- Set by the operator to `<cr-name>-pgcreds`
+  secretName: ""
+  # -- Desired name for the Postgres database to be created by the operator.
+  # @default -- Set by the operator to the CR name with hyphens replaced by underscores.
+  databaseName: ""
+  # -- Desired username for the Postgres database to be created by the operator.
+  # @default -- Set by the operator to the CR name with hyphens replaced by underscores.
+  username: ""
+  # -- Specify which cloudnative-pg postgres cluster to use. Empty to use the default cluster configured in the operator.
+  clusterRef:
+    name: ""
+    namespace: ""
+  mount:
+    enabled: true
+    # -- Map the secret keys to env variables in the deployment. Use the keys from the secret and specify the desired env variable name: e.g. `{ username: "MY_DB_USER_ENV" }`.
+    env: {}
 
 #####################################
 # -- child charts

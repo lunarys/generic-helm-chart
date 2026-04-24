@@ -171,7 +171,6 @@ spec:
             - configMapRef:
                 name: {{ .Values.config.name | default (printf "%s-config" (include "ju-common.fullname" .)) }}
             {{- end }}
-          {{- if or .Values.env .Values.extraConfig.env }}
           env:
             {{- if .Values.env }}
             # settings from 'env'
@@ -188,7 +187,15 @@ spec:
             # Deprecated variable settings from 'extraConfig.env'
               {{- .Values.extraConfig.env | toYaml | nindent 12 }}
             {{- end }}
-          {{- end }}
+            {{- if and .Values.postgresdb.enabled .Values.postgresdb.mount.enabled .Values.postgresdb.mount.env }}
+            {{- range $secretKey, $envVarName := .Values.postgresdb.mount.env }}
+            - name: {{ $envVarName | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgresdb.secretName" $ }}
+                  key: {{ $secretKey }}
+            {{- end }}
+            {{- end }}
           volumeMounts:
             {{- range .Values.extraConfig.volumeMounts }}
             - name: {{ .name }}

@@ -1,0 +1,24 @@
+{{- if .Values.postgresdb.enabled }}
+apiVersion: postgres.crds.lunarys.lab/v1alpha1
+kind: PostgresDatabase
+metadata:
+  name: {{ .Values.postgresdb.nameOverride | default (include "ju-common.fullname" .) }}
+  labels:
+    {{- include "ju-common.labels" . | nindent 4 }}
+spec:
+  deletionPolicy: {{ .Values.postgresdb.deletionPolicy }}
+  {{- if .Values.postgresdb.databaseName }}
+  databaseName: {{ .Values.postgresdb.databaseName }}
+  {{- end }}
+  {{- if .Values.postgresdb.username }}
+  username: {{ .Values.postgresdb.username }}
+  {{- end }}
+  {{- if .Values.postgresdb.secretName }}
+  secretName: {{ .Values.postgresdb.secretName }}
+  {{- end }}
+  {{- if .Values.postgresdb.clusterRef.name }}
+  clusterRef:
+    name: {{ .Values.postgresdb.clusterRef.name }}
+    namespace: {{ .Values.postgresdb.clusterRef.namespace }}
+  {{- end }}
+{{- end }}

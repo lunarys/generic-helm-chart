@@ -281,3 +281,10 @@ true
 {}
 {{- end -}}
 {{- end }}
+
+{{/*
+Resolve the name of the secret created by the postgresdb-user-operator for this release.
+*/}}
+{{- define "postgresdb.secretName" -}}
+{{- .Values.postgresdb.secretName | default (printf "%s-pgcreds" (.Values.postgresdb.nameOverride | default (include "ju-common.fullname" .))) }}
+{{- end }}

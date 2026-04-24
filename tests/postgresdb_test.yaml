@@ -1,0 +1,135 @@
+suite: Test PostgresDatabase CR
+
+templates:
+  - postgresdb.yaml
+
+tests:
+  - it: should not render CR when postgresdb is disabled
+    set:
+      postgresdb:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render CR with correct apiVersion and kind when enabled
+    set:
+      postgresdb:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: apiVersion
+          value: postgres.crds.lunarys.lab/v1alpha1
+      - equal:
+          path: kind
+          value: PostgresDatabase
+
+  - it: should use release name as CR name by default
+    set:
+      postgresdb:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME
+
+  - it: should use nameOverride as CR name when set
+    set:
+      postgresdb:
+        enabled: true
+        nameOverride: my-custom-db
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-custom-db
+
+  - it: should set deletionPolicy from values
+    set:
+      postgresdb:
+        enabled: true
+        deletionPolicy: Delete
+    asserts:
+      - equal:
+          path: spec.deletionPolicy
+          value: Delete
+
+  - it: should default to Retain deletionPolicy
+    set:
+      postgresdb:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.deletionPolicy
+          value: Retain
+
+  - it: should omit optional fields when not set
+    set:
+      postgresdb:
+        enabled: true
+    asserts:
+      - notExists:
+          path: spec.databaseName
+      - notExists:
+          path: spec.username
+      - notExists:
+          path: spec.secretName
+      - notExists:
+          path: spec.clusterRef
+
+  - it: should set databaseName when specified
+    set:
+      postgresdb:
+        enabled: true
+        databaseName: my_db
+    asserts:
+      - equal:
+          path: spec.databaseName
+          value: my_db
+
+  - it: should set username when specified
+    set:
+      postgresdb:
+        enabled: true
+        username: my_user
+    asserts:
+      - equal:
+          path: spec.username
+          value: my_user
+
+  - it: should set secretName when specified
+    set:
+      postgresdb:
+        enabled: true
+        secretName: my-secret
+    asserts:
+      - equal:
+          path: spec.secretName
+          value: my-secret
+
+  - it: should render clusterRef when name is set
+    set:
+      postgresdb:
+        enabled: true
+        clusterRef:
+          name: my-cluster
+          namespace: cnpg-system
+    asserts:
+      - equal:
+          path: spec.clusterRef.name
+          value: my-cluster
+      - equal:
+          path: spec.clusterRef.namespace
+          value: cnpg-system
+
+  - it: should omit clusterRef when name is empty
+    set:
+      postgresdb:
+        enabled: true
+        clusterRef:
+          name: ""
+          namespace: ""
+    asserts:
+      - notExists:
+          path: spec.clusterRef
