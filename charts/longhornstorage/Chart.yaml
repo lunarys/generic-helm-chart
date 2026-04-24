@@ -3,3 +3,4 @@ name: longhornstorage
 description: Helper for in-cluster storage (longhorn)
 type: application
 version: 0.1.0
+home: https://github.com/lunarys/generic-helm-chart

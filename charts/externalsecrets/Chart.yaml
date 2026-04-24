@@ -3,3 +3,4 @@ name: externalsecrets
 description: Helper for external secrets (bitwarden)
 type: application
 version: 0.1.0
+home: https://github.com/lunarys/generic-helm-chart

@@ -3,3 +3,4 @@ name: networkpolicy
 description: Network policy helper (cilium)
 type: application
 version: 0.1.0
+home: https://github.com/lunarys/generic-helm-chart

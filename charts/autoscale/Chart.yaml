@@ -3,3 +3,4 @@ name: autoscale
 description: Helper for autoscaling deployments using KEDA
 type: application
 version: 0.1.0
+home: https://github.com/lunarys/generic-helm-chart

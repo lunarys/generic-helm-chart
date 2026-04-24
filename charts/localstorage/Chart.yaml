@@ -3,3 +3,4 @@ name: localstorage
 description: Helper chart for persistent storage using local-path-provisioner
 type: application
 version: 0.1.0
+home: https://github.com/lunarys/generic-helm-chart

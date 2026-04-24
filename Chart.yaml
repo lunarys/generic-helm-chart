@@ -3,6 +3,7 @@ description: Generic helm Chart for service deployments
 name: generic-service
 type: application
 version: 0.0.1
+home: https://github.com/lunarys/generic-helm-chart
 dependencies:
   - name: smbstorage
     version: 0.1.0  # must match the version in the subchart...
