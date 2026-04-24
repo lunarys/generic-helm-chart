@@ -19,7 +19,7 @@ spec:
           {{- else if $val.static }}
           {{ $val.static }}
           {{- else }}
-          {{ printf "{{ .%s }}" $key }}
+          {{ printf "{{ index . %q }}" $key }}
           {{- end }}
 {{- end }}
 {{- end }}
