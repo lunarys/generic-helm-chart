@@ -8,7 +8,7 @@ kind: Ingress
 metadata:
   name: {{ $ingressName }}-internal
   annotations:
-    {{- $internalMiddlewares := include "ju-common.traefik.computeMiddlewares" (dict "defaultMiddlewares" (get $bsTraefik "internalDefaultMiddlewares" | default "") "traefikConfig" .Values.ingress.traefik) }}
+    {{- $internalMiddlewares := include "ju-common.traefik.computeMiddlewares" (dict "defaultMiddlewares" (get $bsTraefik "internalDefaultMiddlewares" | default "") "traefikConfig" .Values.ingress.traefik "tlsEnabled" .Values.ingress.tls.enabled "httpsRedirectMiddleware" (get $bsTraefik "httpsRedirectMiddleware" | default "")) }}
     {{- if $internalMiddlewares }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ $internalMiddlewares | quote }}
     {{- end }}
@@ -53,7 +53,7 @@ kind: Ingress
 metadata:
   name: {{ $ingressName }}-external
   annotations:
-    {{- $externalMiddlewares := include "ju-common.traefik.computeMiddlewares" (dict "defaultMiddlewares" (get $bsTraefik "externalDefaultMiddlewares" | default "") "traefikConfig" .Values.ingress.external.traefik) }}
+    {{- $externalMiddlewares := include "ju-common.traefik.computeMiddlewares" (dict "defaultMiddlewares" (get $bsTraefik "externalDefaultMiddlewares" | default "") "traefikConfig" .Values.ingress.external.traefik "tlsEnabled" .Values.ingress.external.tls.enabled "httpsRedirectMiddleware" (get $bsTraefik "httpsRedirectMiddleware" | default "")) }}
     {{- if $externalMiddlewares }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ $externalMiddlewares | quote }}
     {{- end }}

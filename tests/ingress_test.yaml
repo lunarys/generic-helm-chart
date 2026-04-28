@@ -223,14 +223,18 @@ tests:
           path: metadata.annotations["another.annotation"]
           value: another-value
 
-  - it: should not set middleware annotation by default
+  - it: should not set middleware annotation by default when TLS and httpsRedirect are both off
     templates:
       - templates/ingress.yaml
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
+      ingress.traefik.httpsRedirect: false
       ingress.external.enabled: true
       ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: false
+      ingress.external.traefik.httpsRedirect: false
     asserts:
       - documentIndex: 0
         notExists:
@@ -245,9 +249,11 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
+      ingress.traefik.middlewares: "internal-middleware@kubernetescrd"
       ingress.external.enabled: true
       ingress.external.host: "external.example.com"
-      ingress.traefik.middlewares: "internal-middleware@kubernetescrd"
+      ingress.external.tls.enabled: false
     asserts:
       - documentIndex: 0
         equal:
@@ -263,8 +269,10 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
       ingress.external.enabled: true
       ingress.external.host: "external.example.com"
+      ingress.external.tls.enabled: false
       ingress.external.traefik.middlewares: "external-middleware@kubernetescrd"
     asserts:
       - documentIndex: 0
@@ -592,6 +600,7 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
       global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
     asserts:
       - documentIndex: 0
@@ -603,8 +612,10 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
       ingress.external.enabled: true
       ingress.external.host: external.example.com
+      ingress.external.tls.enabled: false
       global.baseSettings.traefik.externalDefaultMiddlewares: "ext-default@kubernetescrd"
     asserts:
       - documentIndex: 1
@@ -619,9 +630,11 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
       ingress.traefik.disableDefaultMiddlewares: true
       ingress.external.enabled: true
       ingress.external.host: external.example.com
+      ingress.external.tls.enabled: false
       global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
       global.baseSettings.traefik.externalDefaultMiddlewares: "ext-default@kubernetescrd"
     asserts:
@@ -637,6 +650,7 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
       ingress.traefik.middlewares: "chart-mw@kubernetescrd"
       global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
     asserts:
@@ -649,8 +663,10 @@ tests:
     set:
       ingress.enabled: true
       ingress.host: internal.example.com
+      ingress.tls.enabled: false
       ingress.external.enabled: true
       ingress.external.host: external.example.com
+      ingress.external.tls.enabled: false
       global.baseSettings.traefik.internalDefaultMiddlewares: "int-default@kubernetescrd"
     asserts:
       - documentIndex: 0
@@ -660,3 +676,80 @@ tests:
       - documentIndex: 1
         notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  # HTTPS redirect middleware tests (feature B)
+
+  - it: httpsRedirect should inject redirect middleware when TLS is enabled (default behaviour)
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: true
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "traffic-common-https-redirect@kubernetescrd"
+
+  - it: httpsRedirect should not inject redirect middleware when TLS is disabled
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: false
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: httpsRedirect false should suppress redirect even when TLS is enabled
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: true
+      ingress.traefik.httpsRedirect: false
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: custom httpsRedirectMiddleware name should be used
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: true
+      global.baseSettings.traefik.httpsRedirectMiddleware: "my-ns-custom-redirect@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "my-ns-custom-redirect@kubernetescrd"
+
+  - it: httpsRedirect on external ingress with TLS should inject redirect middleware
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: false
+      ingress.traefik.httpsRedirect: false
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      ingress.external.tls.enabled: true
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "traffic-common-https-redirect@kubernetescrd"
+
+  - it: all three middleware sources should be comma-joined in correct order
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: true
+      ingress.traefik.middlewares: "chart-mw@kubernetescrd"
+      global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "default-allowlist@kubernetescrd,traffic-common-https-redirect@kubernetescrd,chart-mw@kubernetescrd"

@@ -10,6 +10,8 @@
 {{/*
 Compute the final Traefik middleware annotation value.
 Call with a dict: "defaultMiddlewares" <string> "traefikConfig" <map>
+  "tlsEnabled" <bool> "httpsRedirectMiddleware" <string>
+Order: defaultMiddlewares, httpsRedirectMiddleware (when TLS+httpsRedirect), chart middlewares
 */}}
 {{- define "ju-common.traefik.computeMiddlewares" -}}
 {{- $traefikConfig := .traefikConfig | default dict }}
@@ -18,6 +20,9 @@ Call with a dict: "defaultMiddlewares" <string> "traefikConfig" <map>
   {{- if .defaultMiddlewares }}
     {{- $parts = append $parts .defaultMiddlewares }}
   {{- end }}
+{{- end }}
+{{- if and .tlsEnabled (get $traefikConfig "httpsRedirect") .httpsRedirectMiddleware }}
+  {{- $parts = append $parts .httpsRedirectMiddleware }}
 {{- end }}
 {{- $chartMiddlewares := get $traefikConfig "middlewares" | default "" }}
 {{- if $chartMiddlewares }}
