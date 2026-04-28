@@ -585,3 +585,78 @@ tests:
         equal:
           path: metadata.annotations["cert-manager.io/cluster-issuer"]
           value: "chart-external-issuer"
+
+  # Default middleware tests (feature A)
+
+  - it: internalDefaultMiddlewares should appear on internal ingress
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "default-allowlist@kubernetescrd"
+
+  - it: externalDefaultMiddlewares should appear on external ingress only
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      global.baseSettings.traefik.externalDefaultMiddlewares: "ext-default@kubernetescrd"
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "ext-default@kubernetescrd"
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: disableDefaultMiddlewares on internal should suppress default but not affect external
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.traefik.disableDefaultMiddlewares: true
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
+      global.baseSettings.traefik.externalDefaultMiddlewares: "ext-default@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "ext-default@kubernetescrd"
+
+  - it: internalDefaultMiddlewares and chart middlewares should be comma-joined on internal ingress
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.traefik.middlewares: "chart-mw@kubernetescrd"
+      global.baseSettings.traefik.internalDefaultMiddlewares: "default-allowlist@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "default-allowlist@kubernetescrd,chart-mw@kubernetescrd"
+
+  - it: internalDefaultMiddlewares should not bleed to external ingress
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.external.enabled: true
+      ingress.external.host: external.example.com
+      global.baseSettings.traefik.internalDefaultMiddlewares: "int-default@kubernetescrd"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "int-default@kubernetescrd"
+      - documentIndex: 1
+        notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
