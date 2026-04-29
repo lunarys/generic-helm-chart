@@ -1,12 +1,3 @@
-{{- define "ju-backend.serviceAccountName" -}}
-{{- if .Values.serviceAccount.name }}
-  {{- .Values.serviceAccount.name }}
-{{- else }}
-  {{- include "ju-common.fullname" . }}-service-account
-{{- end }}
-{{- end }}
-
-
 {{/*
 Resolve cert-manager ClusterIssuer for the internal ingress.
 Resolution order: ingress.tls.clusterIssuer
@@ -42,17 +33,6 @@ Ingress internal host
 */}}
 {{- define "ju-common.ingress.internalHost" -}}
 {{- coalesce .Values.ingress.host .Values.global.ingress.host -}}
-{{- end }}
-
-{{/*
-
-*/}}
-{{- define "ju-backend.isCustomizedServiceAccount" -}}
-{{- if and .Values.serviceAccount.roleBindings (gt (len .Values.serviceAccount.roleBindings) 0) }}
-true
-{{- else }}
-{{- /* Workaround: Leave this empty to evaluate to false, as "false" would be interpreted as a truthy string */ -}}
-{{- end }}
 {{- end }}
 
 {{/*

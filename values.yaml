@@ -439,19 +439,9 @@ extraConfig:
     ### pvc mount
     #  pvc: "" # name of an existing PersistentVolumeClaim to mount
 
-
-# -- Settings for the ServiceAccount for this deployment. These are only applied if there is are any non-default roles (leader election or explicit role bindings).
-# @default -- see below
 serviceAccount:
-  # -- Overwrite the default name of the service account for this backend.
+  # -- Set a service account name to use an existing service account. The service account must already exist in the namespace.
   name: ""
-  # -- Whether to create the service account or assume it already exists otherwise.
-  create: true
-  # -- Additional roles to bind to the service account.
-  # List of objects, requiring the `name` of the role and optionally a `kind`, kind defaults to `Role`. Set to `ClusterRole` if required.
-  roleBindings: []
-   # - name: my-custom-external-role
-   #   kind: Role / ClusterRole
 
 # -- Postgres database configuration using the [postgresdb-user-operator](https://github.com/lunarys/postgresdb-user-operator).
 # @default -- see below

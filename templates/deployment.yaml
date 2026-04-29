@@ -39,8 +39,8 @@ spec:
       {{- end }}
       securityContext:
         {{- include "ju-common.podSecurityContext" . | nindent 8 }}
-      {{- if include "ju-backend.isCustomizedServiceAccount" . }}
-      serviceAccountName: {{ include "ju-backend.serviceAccountName" . | quote }}
+      {{- if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name | quote }}
       {{- end }}
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
