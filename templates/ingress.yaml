@@ -1,14 +1,16 @@
 {{- if .Values.ingress.enabled }}
 {{- $ingressName := include "ju-common.ingressName" . }}
 {{- $internalHost := include "ju-common.ingress.internalHost" . }}
+{{- $bsTraefik := get (.Values.global.baseSettings | default dict) "traefik" | default dict }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $ingressName }}-internal
   annotations:
-    {{- if .Values.ingress.traefik.middlewares }}
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.ingress.traefik.middlewares | quote }}
+    {{- $internalMiddlewares := include "ju-common.traefik.computeMiddlewares" (dict "defaultMiddlewares" (get $bsTraefik "internalDefaultMiddlewares" | default "") "traefikConfig" .Values.ingress.traefik "tlsEnabled" .Values.ingress.tls.enabled "httpsRedirectMiddleware" (get $bsTraefik "httpsRedirectMiddleware" | default "")) }}
+    {{- if $internalMiddlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $internalMiddlewares | quote }}
     {{- end }}
     {{- if .Values.ingress.tls.enabled }}
     cert-manager.io/cluster-issuer: {{ include "ju-common.tls.internalClusterIssuer" . | quote }}
@@ -51,8 +53,9 @@ kind: Ingress
 metadata:
   name: {{ $ingressName }}-external
   annotations:
-    {{- if .Values.ingress.external.traefik.middlewares }}
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.ingress.external.traefik.middlewares | quote }}
+    {{- $externalMiddlewares := include "ju-common.traefik.computeMiddlewares" (dict "defaultMiddlewares" (get $bsTraefik "externalDefaultMiddlewares" | default "") "traefikConfig" .Values.ingress.external.traefik "tlsEnabled" .Values.ingress.external.tls.enabled "httpsRedirectMiddleware" (get $bsTraefik "httpsRedirectMiddleware" | default "")) }}
+    {{- if $externalMiddlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $externalMiddlewares | quote }}
     {{- end }}
     {{- if .Values.ingress.external.tls.enabled }}
     cert-manager.io/cluster-issuer: {{ include "ju-common.tls.externalClusterIssuer" . | quote }}

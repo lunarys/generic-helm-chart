@@ -31,6 +31,14 @@ global:
       internalClassName: "traefik"
       # -- Default IngressClass for the external ingress (routed via the external Traefik instance).
       externalClassName: "traefik-external"
+    traefik:
+      # -- Default Traefik middleware(s) for the internal ingress (unless disabled per-chart).
+      # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
+      internalDefaultMiddlewares: ""
+      # -- Default Traefik middleware(s) for the external ingress (unless disabled per-chart).
+      externalDefaultMiddlewares: ""
+      # -- Name of the Traefik HTTPS redirect middleware, appended when httpsRedirect is true and TLS is enabled.
+      httpsRedirectMiddleware: "traffic-common-https-redirect@kubernetescrd"
 
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
@@ -147,6 +155,10 @@ ingress:
     # -- Traefik middleware(s) applied to the internal ingress.
     # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
     middlewares: ""
+    # -- Disable the global default middlewares (global.baseSettings.traefik.internalDefaultMiddlewares) for this ingress.
+    disableDefaultMiddlewares: false
+    # -- Append the HTTPS redirect middleware (global.baseSettings.traefik.httpsRedirectMiddleware) when TLS is enabled.
+    httpsRedirect: true
 
   # -- TLS settings for the internal ingress.
   tls:
@@ -176,6 +188,10 @@ ingress:
       # -- Traefik middleware(s) applied to the external ingress.
       # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
       middlewares: ""
+      # -- Disable the global default middlewares (global.baseSettings.traefik.externalDefaultMiddlewares) for the external ingress.
+      disableDefaultMiddlewares: false
+      # -- Append the HTTPS redirect middleware (global.baseSettings.traefik.httpsRedirectMiddleware) when TLS is enabled.
+      httpsRedirect: true
     # -- Annotations for the external ingress only. Does not inherit ingress.annotations.
     annotations: {}
 
