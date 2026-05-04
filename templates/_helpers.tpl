@@ -9,24 +9,28 @@
 
 {{/*
 Compute the final Traefik middleware annotation value.
-Call with a dict: "defaultMiddlewares" <string> "traefikConfig" <map>
+Call with a dict: "defaultMiddlewares" <string|list> "traefikConfig" <map>
   "tlsEnabled" <bool> "httpsRedirectMiddleware" <string>
 Order: defaultMiddlewares, httpsRedirectMiddleware (when TLS+httpsRedirect), chart middlewares
+Both defaultMiddlewares and traefikConfig.middlewares accept a comma-separated string or a list.
 */}}
 {{- define "ju-common.traefik.computeMiddlewares" -}}
 {{- $traefikConfig := .traefikConfig | default dict }}
 {{- $parts := list }}
 {{- if not (get $traefikConfig "disableDefaultMiddlewares") }}
-  {{- if .defaultMiddlewares }}
-    {{- $parts = append $parts .defaultMiddlewares }}
+  {{- $defMw := .defaultMiddlewares }}
+  {{- if kindIs "slice" $defMw }}{{- $defMw = join "," $defMw }}{{- end }}
+  {{- if $defMw }}
+    {{- $parts = append $parts $defMw }}
   {{- end }}
 {{- end }}
 {{- if and .tlsEnabled (get $traefikConfig "httpsRedirect") .httpsRedirectMiddleware }}
   {{- $parts = append $parts .httpsRedirectMiddleware }}
 {{- end }}
-{{- $chartMiddlewares := get $traefikConfig "middlewares" | default "" }}
-{{- if $chartMiddlewares }}
-  {{- $parts = append $parts $chartMiddlewares }}
+{{- $chartMw := get $traefikConfig "middlewares" }}
+{{- if kindIs "slice" $chartMw }}{{- $chartMw = join "," $chartMw }}{{- end }}
+{{- if $chartMw }}
+  {{- $parts = append $parts $chartMw }}
 {{- end }}
 {{- join "," $parts }}
 {{- end }}

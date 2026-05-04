@@ -33,9 +33,10 @@ global:
       externalClassName: "traefik-external"
     traefik:
       # -- Default Traefik middleware(s) for the internal ingress (unless disabled per-chart).
-      # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
+      # Accepts a comma-separated string or a list. Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
       internalDefaultMiddlewares: ""
       # -- Default Traefik middleware(s) for the external ingress (unless disabled per-chart).
+      # Accepts a comma-separated string or a list. Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
       externalDefaultMiddlewares: ""
       # -- Name of the Traefik HTTPS redirect middleware, appended when httpsRedirect is true and TLS is enabled.
       httpsRedirectMiddleware: "traffic-common-https-redirect@kubernetescrd"
@@ -153,7 +154,7 @@ ingress:
 
   traefik:
     # -- Traefik middleware(s) applied to the internal ingress.
-    # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
+    # Accepts a comma-separated string or a list. Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
     middlewares: ""
     # -- Disable the global default middlewares (global.baseSettings.traefik.internalDefaultMiddlewares) for this ingress.
     disableDefaultMiddlewares: false
@@ -186,7 +187,7 @@ ingress:
     className: ""
     traefik:
       # -- Traefik middleware(s) applied to the external ingress.
-      # Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`. Multiple middlewares comma-separated.
+      # Accepts a comma-separated string or a list. Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
       middlewares: ""
       # -- Disable the global default middlewares (global.baseSettings.traefik.externalDefaultMiddlewares) for the external ingress.
       disableDefaultMiddlewares: false

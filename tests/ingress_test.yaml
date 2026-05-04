@@ -753,3 +753,34 @@ tests:
         equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: "default-allowlist@kubernetescrd,traffic-common-https-redirect@kubernetescrd,chart-mw@kubernetescrd"
+
+  # Array / list input tests (feature C)
+
+  - it: chart middlewares as list should be comma-joined
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: false
+      ingress.traefik.middlewares:
+        - mw1@kubernetescrd
+        - mw2@kubernetescrd
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "mw1@kubernetescrd,mw2@kubernetescrd"
+
+  - it: internalDefaultMiddlewares as list and chart middlewares as list should be comma-joined in order
+    set:
+      ingress.enabled: true
+      ingress.host: internal.example.com
+      ingress.tls.enabled: false
+      ingress.traefik.middlewares:
+        - chart-mw@kubernetescrd
+      global.baseSettings.traefik.internalDefaultMiddlewares:
+        - default-allowlist@kubernetescrd
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "default-allowlist@kubernetescrd,chart-mw@kubernetescrd"
