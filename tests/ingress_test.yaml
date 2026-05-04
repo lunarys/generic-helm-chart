@@ -688,7 +688,7 @@ tests:
       - documentIndex: 0
         equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "traffic-common-https-redirect@kubernetescrd"
+          value: "traefik-common-https-redirect@kubernetescrd"
 
   - it: httpsRedirect should not inject redirect middleware when TLS is disabled
     set:
@@ -739,7 +739,7 @@ tests:
       - documentIndex: 1
         equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "traffic-common-https-redirect@kubernetescrd"
+          value: "traefik-common-https-redirect@kubernetescrd"
 
   - it: all three middleware sources should be comma-joined in correct order
     set:
@@ -752,7 +752,7 @@ tests:
       - documentIndex: 0
         equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "default-allowlist@kubernetescrd,traffic-common-https-redirect@kubernetescrd,chart-mw@kubernetescrd"
+          value: "default-allowlist@kubernetescrd,traefik-common-https-redirect@kubernetescrd,chart-mw@kubernetescrd"
 
   # Array / list input tests (feature C)
 

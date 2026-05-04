@@ -39,7 +39,7 @@ global:
       # Accepts a comma-separated string or a list. Pattern: `{{ namespace }}-{{ name }}@kubernetescrd`.
       externalDefaultMiddlewares: ""
       # -- Name of the Traefik HTTPS redirect middleware, appended when httpsRedirect is true and TLS is enabled.
-      httpsRedirectMiddleware: "traffic-common-https-redirect@kubernetescrd"
+      httpsRedirectMiddleware: "traefik-common-https-redirect@kubernetescrd"
 
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
