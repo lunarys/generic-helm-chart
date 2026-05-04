@@ -1,4 +1,33 @@
 {{/*
+Compute the final Traefik middleware annotation value.
+Call with a dict: "defaultMiddlewares" <string|list> "traefikConfig" <map>
+  "tlsEnabled" <bool> "httpsRedirectMiddleware" <string>
+Order: defaultMiddlewares, httpsRedirectMiddleware (when TLS+httpsRedirect), chart middlewares
+Both defaultMiddlewares and traefikConfig.middlewares accept a comma-separated string or a list.
+*/}}
+{{- define "ju-common.traefik.computeMiddlewares" -}}
+{{- $traefikConfig := .traefikConfig | default dict }}
+{{- $middlewareParts := list }}
+{{- if not $traefikConfig.disableDefaultMiddlewares }}
+  {{- if kindIs "slice" .defaultMiddlewares }}
+    {{- $middlewareParts = concat $middlewareParts .defaultMiddlewares }}
+  {{- else if .defaultMiddlewares }}
+    {{- $middlewareParts = append $middlewareParts .defaultMiddlewares }}
+  {{- end }}
+{{- end }}
+{{- if and .tlsEnabled $traefikConfig.httpsRedirect .httpsRedirectMiddleware }}
+  {{- $middlewareParts = append $middlewareParts .httpsRedirectMiddleware }}
+{{- end }}
+{{- if kindIs "slice" $traefikConfig.middlewares }}
+  {{- $middlewareParts = concat $middlewareParts $traefikConfig.middlewares }}
+{{- else if $traefikConfig.middlewares }}
+  {{- $middlewareParts = append $middlewareParts $traefikConfig.middlewares }}
+{{- end }}
+{{- join "," $middlewareParts }}
+{{- end }}
+
+
+{{/*
 Resolve cert-manager ClusterIssuer for the internal ingress.
 Resolution order: ingress.tls.clusterIssuer
   → global.baseSettings.tls.internalClusterIssuer → global.baseSettings.tls.clusterIssuer
