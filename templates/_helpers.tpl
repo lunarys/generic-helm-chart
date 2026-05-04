@@ -16,23 +16,23 @@ Both defaultMiddlewares and traefikConfig.middlewares accept a comma-separated s
 */}}
 {{- define "ju-common.traefik.computeMiddlewares" -}}
 {{- $traefikConfig := .traefikConfig | default dict }}
-{{- $parts := list }}
-{{- if not (get $traefikConfig "disableDefaultMiddlewares") }}
-  {{- $defMw := .defaultMiddlewares }}
-  {{- if kindIs "slice" $defMw }}{{- $defMw = join "," $defMw }}{{- end }}
-  {{- if $defMw }}
-    {{- $parts = append $parts $defMw }}
+{{- $middlewareParts := list }}
+{{- if not $traefikConfig.disableDefaultMiddlewares }}
+  {{- if kindIs "slice" .defaultMiddlewares }}
+    {{- $middlewareParts = concat $middlewareParts .defaultMiddlewares }}
+  {{- else if .defaultMiddlewares }}
+    {{- $middlewareParts = append $middlewareParts .defaultMiddlewares }}
   {{- end }}
 {{- end }}
-{{- if and .tlsEnabled (get $traefikConfig "httpsRedirect") .httpsRedirectMiddleware }}
-  {{- $parts = append $parts .httpsRedirectMiddleware }}
+{{- if and .tlsEnabled $traefikConfig.httpsRedirect .httpsRedirectMiddleware }}
+  {{- $middlewareParts = append $middlewareParts .httpsRedirectMiddleware }}
 {{- end }}
-{{- $chartMw := get $traefikConfig "middlewares" }}
-{{- if kindIs "slice" $chartMw }}{{- $chartMw = join "," $chartMw }}{{- end }}
-{{- if $chartMw }}
-  {{- $parts = append $parts $chartMw }}
+{{- if kindIs "slice" $traefikConfig.middlewares }}
+  {{- $middlewareParts = concat $middlewareParts $traefikConfig.middlewares }}
+{{- else if $traefikConfig.middlewares }}
+  {{- $middlewareParts = append $middlewareParts $traefikConfig.middlewares }}
 {{- end }}
-{{- join "," $parts }}
+{{- join "," $middlewareParts }}
 {{- end }}
 
 
