@@ -18,7 +18,7 @@ jobs:
       charts: ${{ steps.find-charts.outputs.charts }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: v${{ inputs.version }}
 
@@ -54,7 +54,7 @@ jobs:
         chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: v${{ inputs.version }}
 
