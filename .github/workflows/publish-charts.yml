@@ -71,12 +71,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package and push chart
+        env:
+          SEMVER: ${{ inputs.version }}
+          CHART_PATH: ${{ matrix.chart.path }}
+          CHART_NAME: ${{ matrix.chart.name }}
+          REGISTRY: ${{ env.REGISTRY }}
+          REPO_OWNER: ${{ github.repository_owner }}
         run: |
-          SEMVER="${{ inputs.version }}"
-          cd "${{ matrix.chart.path }}"
+          cd "$CHART_PATH"
           helm package . \
             --version "$SEMVER" \
             --app-version "$SEMVER"
-          helm push "${{ matrix.chart.name }}-${SEMVER}.tgz" \
-            oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
-          echo "✅ Published: oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/${{ matrix.chart.name }}:${SEMVER}"
+          helm push "$CHART_NAME-${SEMVER}.tgz" \
+            oci://$REGISTRY/$REPO_OWNER/charts
+          echo "✅ Published: oci://$REGISTRY/$REPO_OWNER/charts/$CHART_NAME:${SEMVER}"
