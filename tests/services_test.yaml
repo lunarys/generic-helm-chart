@@ -153,12 +153,41 @@ tests:
           path: spec.ports[0].targetPort
           value: 54321
 
-  - it: should include externalIPs when specified
+  # LB IPAM cases (replaces old externalIPs cases)
+
+  # Case 1: loadBalancerIPs → LB
+  - it: "loadBalancerIPs sets type LoadBalancer, annotation, pool label, no externalIPs"
     set:
       services:
         test:
           enabled: true
-          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.5"
+      - equal:
+          path: metadata.labels["custom.network/lb-pool"]
+          value: "static"
+      - notExists:
+          path: spec.externalIPs
+
+  # Case 2: externalIPs fallback
+  - it: "externalIPs fallback produces same LB output, no spec.externalIPs"
+    set:
+      services:
+        test:
+          enabled: true
           ports:
             http:
               enabled: true
@@ -166,21 +195,170 @@ tests:
               port: 80
               targetPort: 8080
           externalIPs:
-            - 192.168.1.100
-            - 192.168.1.101
+            - 10.0.4.5
     asserts:
       - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.5"
+      - equal:
+          path: metadata.labels["custom.network/lb-pool"]
+          value: "static"
+      - notExists:
           path: spec.externalIPs
-          value:
-            - 192.168.1.100
-            - 192.168.1.101
 
-  - it: should not include externalIPs when not specified
+  # Case 3: loadBalancerIPs wins over externalIPs
+  - it: "loadBalancerIPs takes precedence over externalIPs"
     set:
       services:
         test:
           enabled: true
-          type: ClusterIP
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.9
+          externalIPs:
+            - 10.0.4.5
+    asserts:
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.9"
+
+  # Case 4: dual-stack auto-detect
+  - it: "dual-stack auto-detect sets ipFamilyPolicy and ipFamilies"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.2
+            - "fda0:f54f:5876::4:2"
+    asserts:
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.2,fda0:f54f:5876::4:2"
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: RequireDualStack
+      - equal:
+          path: spec.ipFamilies
+          value:
+            - IPv4
+            - IPv6
+
+  # Case 5: single family → no ipFamilyPolicy
+  - it: "single IP family produces no ipFamilyPolicy"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+    asserts:
+      - notExists:
+          path: spec.ipFamilyPolicy
+
+  # Case 6: user annotations/labels merge
+  - it: "user annotations and labels merge with auto-derived ones"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+          annotations:
+            foo: bar
+          labels:
+            baz: qux
+    asserts:
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.5"
+      - equal:
+          path: metadata.annotations["foo"]
+          value: "bar"
+      - equal:
+          path: metadata.labels["custom.network/lb-pool"]
+          value: "static"
+      - equal:
+          path: metadata.labels["baz"]
+          value: "qux"
+
+  # Case 7: user ipFamilyPolicy overrides auto dual-stack
+  - it: "user ipFamilyPolicy wins over auto dual-stack detection"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.2
+            - "fda0:f54f:5876::4:2"
+          ipFamilyPolicy: SingleStack
+    asserts:
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: SingleStack
+
+  # Case 7b: user ipFamilies passthrough wins without an explicit ipFamilyPolicy
+  - it: "user ipFamilies is honored verbatim without setting ipFamilyPolicy"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+          ipFamilies:
+            - IPv4
+    asserts:
+      - equal:
+          path: spec.ipFamilies
+          value:
+            - IPv4
+      - notExists:
+          path: spec.ipFamilyPolicy
+
+  # Case 8: no IPs → default type (ClusterIP), clean
+  - it: "no IPs keeps default ClusterIP type and omits LB fields"
+    set:
+      services:
+        test:
+          enabled: true
           ports:
             http:
               enabled: true
@@ -188,8 +366,15 @@ tests:
               port: 80
               targetPort: 8080
     asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - notExists:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
       - notExists:
           path: spec.externalIPs
+      - notExists:
+          path: spec.ipFamilyPolicy
 
   - it: should include correct labels
     set:
@@ -344,3 +529,115 @@ tests:
       - equal:
           path: spec.ports[0].targetPort
           value: 80123
+
+  # Unit F — allocateLoadBalancerNodePorts (named services)
+
+  # F-1: LB via loadBalancerIPs → suppressed (default false)
+  - it: "named service with loadBalancerIPs defaults allocateLoadBalancerNodePorts to false"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-2: dynamic LB (explicit type, no IPs) → suppressed
+  - it: "named service with explicit type LoadBalancer defaults allocateLoadBalancerNodePorts to false"
+    set:
+      services:
+        test:
+          enabled: true
+          type: LoadBalancer
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-3: user override wins (true)
+  - it: "named service allocateLoadBalancerNodePorts user override true is honored"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+          allocateLoadBalancerNodePorts: true
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: true
+
+  # F-4: non-LoadBalancer → field absent
+  - it: "named ClusterIP service omits allocateLoadBalancerNodePorts entirely"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.allocateLoadBalancerNodePorts
+
+  # Unit G — static nodePort on named service ports
+
+  # G-3: nodePort set on a named service port → rendered
+  - it: "named service port nodePort is rendered when set"
+    set:
+      services:
+        test:
+          enabled: true
+          type: NodePort
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+              nodePort: 30090
+    asserts:
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30090
+
+  # G-4: nodePort absent on named service port → field omitted
+  - it: "named service port nodePort is absent when not set"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.ports[0].nodePort

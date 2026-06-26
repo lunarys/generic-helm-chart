@@ -1,0 +1,226 @@
+suite: Test Primary Service Template (LB IPAM)
+
+templates:
+  - service.yaml
+
+tests:
+  # Case 1: loadBalancerIPs → LB
+  - it: "loadBalancerIPs sets type LoadBalancer, annotation, pool label, no externalIPs"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.5"
+      - equal:
+          path: metadata.labels["custom.network/lb-pool"]
+          value: "static"
+      - notExists:
+          path: spec.externalIPs
+
+  # Case 2: externalIPs fallback
+  - it: "externalIPs fallback produces same LB output, no spec.externalIPs"
+    set:
+      service.enabled: true
+      service.externalIPs:
+        - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.5"
+      - equal:
+          path: metadata.labels["custom.network/lb-pool"]
+          value: "static"
+      - notExists:
+          path: spec.externalIPs
+
+  # Case 3: loadBalancerIPs wins over externalIPs
+  - it: "loadBalancerIPs takes precedence over externalIPs"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.9
+      service.externalIPs:
+        - 10.0.4.5
+    asserts:
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.9"
+
+  # Case 4: dual-stack auto-detect
+  - it: "dual-stack auto-detect sets ipFamilyPolicy and ipFamilies"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.2
+        - "fda0:f54f:5876::4:2"
+    asserts:
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.2,fda0:f54f:5876::4:2"
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: RequireDualStack
+      - equal:
+          path: spec.ipFamilies
+          value:
+            - IPv4
+            - IPv6
+
+  # Case 5: single family → no ipFamilyPolicy
+  - it: "single IP family produces no ipFamilyPolicy"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+    asserts:
+      - notExists:
+          path: spec.ipFamilyPolicy
+
+  # Case 6: user annotations/labels merge
+  - it: "user annotations and labels merge with auto-derived ones"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+      service.annotations:
+        foo: bar
+      service.labels:
+        baz: qux
+    asserts:
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: "10.0.4.5"
+      - equal:
+          path: metadata.annotations["foo"]
+          value: "bar"
+      - equal:
+          path: metadata.labels["custom.network/lb-pool"]
+          value: "static"
+      - equal:
+          path: metadata.labels["baz"]
+          value: "qux"
+
+  # Case 7: user ipFamilyPolicy overrides auto dual-stack
+  - it: "user ipFamilyPolicy wins over auto dual-stack detection"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.2
+        - "fda0:f54f:5876::4:2"
+      service.ipFamilyPolicy: SingleStack
+    asserts:
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: SingleStack
+
+  # Case 7b: user ipFamilies passthrough wins without an explicit ipFamilyPolicy
+  - it: "user ipFamilies is honored verbatim without setting ipFamilyPolicy"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+      service.ipFamilies:
+        - IPv4
+    asserts:
+      - equal:
+          path: spec.ipFamilies
+          value:
+            - IPv4
+      - notExists:
+          path: spec.ipFamilyPolicy
+
+  # Case 8: no IPs → default type, clean (no lbipam annotation, no externalIPs, no ipFamilyPolicy)
+  - it: "no IPs keeps default type and omits LB fields"
+    set:
+      service.enabled: true
+      service.port: 80
+      service.targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - notExists:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+      - notExists:
+          path: spec.externalIPs
+      - notExists:
+          path: spec.ipFamilyPolicy
+
+  # Unit F — allocateLoadBalancerNodePorts
+
+  # F-1: LB via loadBalancerIPs → suppressed (default false)
+  - it: "loadBalancerIPs LB service defaults allocateLoadBalancerNodePorts to false"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-2: dynamic LB (explicit type, no IPs) → suppressed
+  - it: "explicit type LoadBalancer defaults allocateLoadBalancerNodePorts to false"
+    set:
+      service.enabled: true
+      service.type: LoadBalancer
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-3: user override wins (true)
+  - it: "allocateLoadBalancerNodePorts user override true is honored"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+      service.allocateLoadBalancerNodePorts: true
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: true
+
+  # F-4: non-LoadBalancer → field absent
+  - it: "ClusterIP service omits allocateLoadBalancerNodePorts entirely"
+    set:
+      service.enabled: true
+      service.port: 80
+      service.targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.allocateLoadBalancerNodePorts
+
+  # Unit G — static nodePort on primary service
+
+  # G-1: nodePort set → rendered
+  - it: "service.nodePort is rendered when set"
+    set:
+      service.enabled: true
+      service.type: NodePort
+      service.port: 80
+      service.targetPort: 8080
+      service.nodePort: 30080
+    asserts:
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
+
+  # G-2: nodePort absent → field omitted
+  - it: "service.nodePort is absent when not set"
+    set:
+      service.enabled: true
+      service.port: 80
+      service.targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.ports[0].nodePort

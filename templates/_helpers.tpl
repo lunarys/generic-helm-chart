@@ -28,6 +28,178 @@ Both defaultMiddlewares and traefikConfig.middlewares accept a comma-separated s
 
 
 {{/*
+LB-IPAM service helpers — intent-based LoadBalancer IP exposure.
+An app author sets only loadBalancerIPs (or the deprecated externalIPs alias); these
+helpers derive the Cilium LB-IPAM plumbing. Each helper takes a dict:
+  "svc" <per-service config map> "ctx" <root context $>
+and the calling template combines their output:
+  - ju-common.service.resolvedType   → final spec.type string
+  - ju-common.service.annotations    → metadata.annotations (auto lbipam + user, user wins)
+  - ju-common.service.extraLabels    → extra metadata.labels (auto pool label + user, user wins)
+  - ju-common.service.ipFamily       → spec.ipFamilyPolicy / spec.ipFamilies block
+  - ju-common.service.isIPv6         → internal: classify a single IP string
+
+Usage in templates:
+  {{- $svcCtx := dict "svc" $svc "ctx" $ }}
+  {{- $resolvedType := include "ju-common.service.resolvedType" $svcCtx }}
+  ... (see templates/service.yaml and templates/services.yaml)
+*/}}
+
+{{/*
+  Helper: returns "true" if the IP string is IPv6 (contains colon).
+*/}}
+{{- define "ju-common.service.isIPv6" -}}
+{{- if contains ":" . -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit the FINAL resolved service type string.
+  Precedence: explicit user-set type > LoadBalancer (when IPs present) > ClusterIP.
+  Always emits a concrete value, so callers can use it verbatim.
+*/}}
+{{- define "ju-common.service.resolvedType" -}}
+{{- $svc := .svc -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- if $svc.type -}}
+  {{- $svc.type -}}
+{{- else if $ips -}}
+  {{- "LoadBalancer" -}}
+{{- else -}}
+  {{- "ClusterIP" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit the annotations map (merged: auto + user; user wins).
+  Emits a YAML map fragment or empty string.
+*/}}
+{{- define "ju-common.service.annotations" -}}
+{{- $svc := .svc -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- $auto := dict -}}
+{{- if $ips -}}
+  {{- $_ := set $auto "lbipam.cilium.io/ips" (join "," $ips) -}}
+{{- end -}}
+{{- $userAnnotations := $svc.annotations | default dict -}}
+{{- /* Merge user over auto: dest=user (deep-copied so Values is untouched), src=auto fills gaps; user wins on conflict */ -}}
+{{- $merged := merge (deepCopy $userAnnotations) $auto -}}
+{{- if $merged -}}
+{{ toYaml $merged }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit extra labels map (merged: auto pool label + user labels; user wins).
+  Pool label key/value are read from global.baseSettings.loadBalancerPool (with sane defaults),
+  so they can be overridden cluster-wide via ArgoCD app values.
+  Emits a YAML map fragment or empty string.
+*/}}
+{{- define "ju-common.service.extraLabels" -}}
+{{- $svc := .svc -}}
+{{- $ctx := .ctx -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- $auto := dict -}}
+{{- if $ips -}}
+  {{- $bs := ($ctx.Values.global.baseSettings | default dict) -}}
+  {{- $lbPoolCfg := (get $bs "loadBalancerPool" | default dict) -}}
+  {{- $poolKey := (get $lbPoolCfg "labelKey" | default "custom.network/lb-pool") -}}
+  {{- $poolVal := (get $lbPoolCfg "labelValue" | default "static") -}}
+  {{- $_ := set $auto $poolKey $poolVal -}}
+{{- end -}}
+{{- $userLabels := $svc.labels | default dict -}}
+{{- $merged := merge (deepCopy $userLabels) $auto -}}
+{{- if $merged -}}
+{{ toYaml $merged }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit ipFamilyPolicy and ipFamilies lines (or nothing).
+  The two fields are INDEPENDENT power-user overrides; each is decided on its own:
+    - ipFamilyPolicy = user value if set, else RequireDualStack when both an IPv4
+      and an IPv6 are present, else nothing.
+    - ipFamilies = user value (verbatim) if set, else [IPv4, IPv6] when both
+      families present, else nothing.
+  A user can set one field without the other.
+*/}}
+{{- define "ju-common.service.ipFamily" -}}
+{{- $svc := .svc -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- $userPolicy := $svc.ipFamilyPolicy | default "" -}}
+{{- $userFamilies := $svc.ipFamilies | default list -}}
+{{- /* Detect whether both IP families are present (drives the auto defaults). */ -}}
+{{- $hasV4 := false -}}
+{{- $hasV6 := false -}}
+{{- range $ip := $ips -}}
+  {{- if include "ju-common.service.isIPv6" $ip -}}
+    {{- $hasV6 = true -}}
+  {{- else -}}
+    {{- $hasV4 = true -}}
+  {{- end -}}
+{{- end -}}
+{{- $dualStack := and $hasV4 $hasV6 -}}
+{{- /* ipFamilyPolicy: user wins, else auto RequireDualStack when dual-stack. */ -}}
+{{- if $userPolicy -}}
+ipFamilyPolicy: {{ $userPolicy }}
+{{- else if $dualStack -}}
+ipFamilyPolicy: RequireDualStack
+{{- end -}}
+{{- /* ipFamilies: user wins (verbatim), else auto [IPv4, IPv6] when dual-stack. */ -}}
+{{- if $userFamilies }}
+ipFamilies:
+  {{- range $userFamilies }}
+  - {{ . }}
+  {{- end }}
+{{- else if $dualStack }}
+ipFamilies:
+  - IPv4
+  - IPv6
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit allocateLoadBalancerNodePorts line (or nothing).
+
+  Motivation: Kubernetes defaults allocateLoadBalancerNodePorts to true for LoadBalancer
+  services, which causes Kubernetes to allocate a NodePort for every service port. In a
+  Cilium kube-proxy-replacement + LB-IPAM cluster, traffic is routed directly to the
+  LoadBalancer IP via eBPF/DSR, so those NodePorts are unused. They only waste the
+  nodeport range and open an extra port on every node.
+
+  Resolution:
+    - If the resolved service type is NOT LoadBalancer → emit nothing (field must be absent;
+      it is only meaningful for LoadBalancer services).
+    - If type IS LoadBalancer → emit `true` only when the service explicitly set
+      allocateLoadBalancerNodePorts: true; otherwise emit `false` (the chart's opinionated
+      default — both "unset" and an explicit false resolve to false, which is safe for
+      Cilium LB-IPAM clusters).
+
+  Call with the same dict used by other service helpers:
+    "svc" <per-service config map> "ctx" <root context $>
+    "resolvedType" <string from ju-common.service.resolvedType>
+*/}}
+{{- define "ju-common.service.allocateNodePorts" -}}
+{{- $svc := .svc -}}
+{{- $resolvedType := .resolvedType -}}
+{{- if eq $resolvedType "LoadBalancer" -}}
+{{- if eq (toString (get $svc "allocateLoadBalancerNodePorts")) "true" -}}
+allocateLoadBalancerNodePorts: true
+{{- else -}}
+allocateLoadBalancerNodePorts: false
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
 Resolve cert-manager ClusterIssuer for the internal ingress.
 Resolution order: ingress.tls.clusterIssuer
   → global.baseSettings.tls.internalClusterIssuer → global.baseSettings.tls.clusterIssuer

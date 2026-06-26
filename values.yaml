@@ -40,6 +40,12 @@ global:
       externalDefaultMiddlewares: ""
       # -- Name of the Traefik HTTPS redirect middleware, appended when httpsRedirect is true and TLS is enabled.
       httpsRedirectMiddleware: "traefik-common-https-redirect@kubernetescrd"
+    loadBalancerPool:
+      # -- Label key placed on Services to select the Cilium LB IP pool for static-IP exposure.
+      # Override cluster-wide via ArgoCD app values if your cluster uses a different label convention.
+      labelKey: "custom.network/lb-pool"
+      # -- Label value paired with `labelKey` to select the static IP pool.
+      labelValue: "static"
 
 # -- you can use `"image.registry" + "image.repository"` to specify the docker-image or both with using `"image.name"`.
 # set either `"image.registry" + "image.repository"` or `"image.name"`
@@ -204,7 +210,10 @@ ingress:
 # @default -- see below
 service:
   enabled: true
-  type: ClusterIP
+  # -- Service type override. When `loadBalancerIPs` or `externalIPs` are set, the chart defaults to
+  # `LoadBalancer`; set this only to explicitly override that (e.g. `NodePort`).
+  # @default -- `ClusterIP` (no IPs) or `LoadBalancer` (IPs set)
+  type: ""
   name: ""
   # -- default port where the ingress routes the traffic to the service
   port: 80
@@ -212,8 +221,36 @@ service:
   protocol: "TCP"
   # -- default port where the service routes the traffic to the pod. Your app has to service anything on this port. It sets the spring value `server.port` to the same value (as an ENV-Var in the configmap)
   targetPort: 8080
+  # -- List of IPs to expose the service on via Cilium LB-IPAM (type: LoadBalancer).
+  # The chart auto-derives the pool label, the lbipam.cilium.io/ips annotation, and dual-stack
+  # settings. Takes precedence over `externalIPs` when both are set.
+  loadBalancerIPs: []
+  # -- **DEPRECATED** — use `loadBalancerIPs` instead. Kept as a backwards-compatible fallback:
+  # when `loadBalancerIPs` is unset, these IPs are used as the source list. Ignored when
+  # `loadBalancerIPs` is also set. Will be removed in a future major version.
   externalIPs: []
-  #ipFamilyPolicy: PreferDualStack
+  # -- Extra annotations merged onto the Service. User keys take precedence over auto-derived ones.
+  annotations: {}
+  # -- Extra labels merged onto the Service. User keys take precedence over auto-derived ones.
+  labels: {}
+  # -- IP family policy override (e.g. `SingleStack`, `PreferDualStack`, `RequireDualStack`).
+  # When unset and both an IPv4 and IPv6 are in the IP list, the chart auto-sets `RequireDualStack`.
+  ipFamilyPolicy: ""
+  # -- IP families override (e.g. `[IPv4, IPv6]`). When unset, auto-derived from `loadBalancerIPs`.
+  ipFamilies: []
+  # -- Whether Kubernetes should allocate a NodePort for each port of a LoadBalancer
+  # service. Only applies when the service resolves to type LoadBalancer; ignored otherwise.
+  # Defaults to false for chart-managed LoadBalancer services because Cilium LB-IPAM +
+  # kube-proxy-replacement route the LoadBalancer IP directly (eBPF/DSR), so the NodePorts
+  # would be unused yet still consume the nodeport range and open a port on every node.
+  # Set to true only if you actually need NodePort access alongside the LoadBalancer IP.
+  # @default -- false
+  allocateLoadBalancerNodePorts: ""
+  # -- Static NodePort for the default service port. Only valid when the service allocates
+  # node ports (type NodePort, or LoadBalancer with allocateLoadBalancerNodePorts=true);
+  # leave unset to let Kubernetes auto-assign from the nodeport range.
+  # @default -- none (auto-assigned)
+  nodePort: ""
 
 # -- Additional Kubernetes services configuration.
 # This allows you to define extra services besides the default one.
@@ -222,8 +259,10 @@ services:
   example:
     # -- Enable or disable this service.
     enabled: false
-    # -- Type of the Kubernetes service (e.g., ClusterIP, NodePort, LoadBalancer).
-    type: ClusterIP
+    # -- Service type override. When `loadBalancerIPs` or `externalIPs` are set, the chart defaults to
+    # `LoadBalancer`; set this only to explicitly override that (e.g. `NodePort`).
+    # @default -- `ClusterIP` (no IPs) or `LoadBalancer` (IPs set)
+    type: ""
     ports:
       example:
         # -- Enable or disable this port.
@@ -237,9 +276,36 @@ services:
         # -- Target port on the pod to route traffic to.
         # @default -- `.port`
         targetPort: 8080
-    # -- List of external IPs for the service.
+        # -- Static NodePort for this service port. Only valid when the service allocates
+        # node ports (type NodePort, or LoadBalancer with allocateLoadBalancerNodePorts=true);
+        # leave unset to let Kubernetes auto-assign from the nodeport range.
+        # @default -- none (auto-assigned)
+        nodePort: ""
+    # -- List of IPs to expose the service on via Cilium LB-IPAM (type: LoadBalancer).
+    # The chart auto-derives the pool label, the lbipam.cilium.io/ips annotation, and dual-stack
+    # settings. Takes precedence over `externalIPs` when both are set.
+    loadBalancerIPs: []
+    # -- **DEPRECATED** — use `loadBalancerIPs` instead. Kept as a backwards-compatible fallback:
+    # when `loadBalancerIPs` is unset, these IPs are used as the source list. Ignored when
+    # `loadBalancerIPs` is also set. Will be removed in a future major version.
     externalIPs: []
-    #ipFamilyPolicy: PreferDualStack
+    # -- Extra annotations merged onto the Service. User keys take precedence over auto-derived ones.
+    annotations: {}
+    # -- Extra labels merged onto the Service. User keys take precedence over auto-derived ones.
+    labels: {}
+    # -- IP family policy override (e.g. `SingleStack`, `PreferDualStack`, `RequireDualStack`).
+    # When unset and both an IPv4 and IPv6 are in the IP list, the chart auto-sets `RequireDualStack`.
+    ipFamilyPolicy: ""
+    # -- IP families override (e.g. `[IPv4, IPv6]`). When unset, auto-derived from `loadBalancerIPs`.
+    ipFamilies: []
+    # -- Whether Kubernetes should allocate a NodePort for each port of a LoadBalancer
+    # service. Only applies when the service resolves to type LoadBalancer; ignored otherwise.
+    # Defaults to false for chart-managed LoadBalancer services because Cilium LB-IPAM +
+    # kube-proxy-replacement route the LoadBalancer IP directly (eBPF/DSR), so the NodePorts
+    # would be unused yet still consume the nodeport range and open a port on every node.
+    # Set to true only if you actually need NodePort access alongside the LoadBalancer IP.
+    # @default -- false
+    allocateLoadBalancerNodePorts: ""
 
 # -- configuration for the liveness probe. By default, the liveness probe is executed against `{{ .Values.actuator.port }}/{{ .Values.actuator.basePath }}/{{ .Values.actuator.contextPath }}/health/liveness`
 # @default -- see below
