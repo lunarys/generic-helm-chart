@@ -529,3 +529,78 @@ tests:
       - equal:
           path: spec.ports[0].targetPort
           value: 80123
+
+  # Unit F — allocateLoadBalancerNodePorts (named services)
+
+  # F-1: LB via loadBalancerIPs → suppressed (default false)
+  - it: "named service with loadBalancerIPs defaults allocateLoadBalancerNodePorts to false"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-2: dynamic LB (explicit type, no IPs) → suppressed
+  - it: "named service with explicit type LoadBalancer defaults allocateLoadBalancerNodePorts to false"
+    set:
+      services:
+        test:
+          enabled: true
+          type: LoadBalancer
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-3: user override wins (true)
+  - it: "named service allocateLoadBalancerNodePorts user override true is honored"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+          allocateLoadBalancerNodePorts: true
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: true
+
+  # F-4: non-LoadBalancer → field absent
+  - it: "named ClusterIP service omits allocateLoadBalancerNodePorts entirely"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.allocateLoadBalancerNodePorts

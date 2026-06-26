@@ -5,6 +5,7 @@
 {{- $annotations := include "ju-common.service.annotations" $svcCtx }}
 {{- $extraLabels := include "ju-common.service.extraLabels" $svcCtx }}
 {{- $ipFamily := include "ju-common.service.ipFamily" $svcCtx }}
+{{- $allocNodePorts := include "ju-common.service.allocateNodePorts" (dict "svc" $service "resolvedType" $resolvedType) }}
 ---
 kind: Service
 apiVersion: v1
@@ -21,6 +22,9 @@ metadata:
   {{- end }}
 spec:
   type: {{ $resolvedType }}
+  {{- if $allocNodePorts }}
+  {{ $allocNodePorts | nindent 2 | trim }}
+  {{- end }}
   {{- if $ipFamily }}
   {{ $ipFamily | nindent 2 | trim }}
   {{- end }}

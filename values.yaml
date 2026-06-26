@@ -238,6 +238,14 @@ service:
   ipFamilyPolicy: ""
   # -- IP families override (e.g. `[IPv4, IPv6]`). When unset, auto-derived from `loadBalancerIPs`.
   ipFamilies: []
+  # -- Whether Kubernetes should allocate a NodePort for each port of a LoadBalancer
+  # service. Only applies when the service resolves to type LoadBalancer; ignored otherwise.
+  # Defaults to false for chart-managed LoadBalancer services because Cilium LB-IPAM +
+  # kube-proxy-replacement route the LoadBalancer IP directly (eBPF/DSR), so the NodePorts
+  # would be unused yet still consume the nodeport range and open a port on every node.
+  # Set to true only if you actually need NodePort access alongside the LoadBalancer IP.
+  # @default -- false
+  allocateLoadBalancerNodePorts: ""
 
 # -- Additional Kubernetes services configuration.
 # This allows you to define extra services besides the default one.
@@ -280,6 +288,14 @@ services:
     ipFamilyPolicy: ""
     # -- IP families override (e.g. `[IPv4, IPv6]`). When unset, auto-derived from `loadBalancerIPs`.
     ipFamilies: []
+    # -- Whether Kubernetes should allocate a NodePort for each port of a LoadBalancer
+    # service. Only applies when the service resolves to type LoadBalancer; ignored otherwise.
+    # Defaults to false for chart-managed LoadBalancer services because Cilium LB-IPAM +
+    # kube-proxy-replacement route the LoadBalancer IP directly (eBPF/DSR), so the NodePorts
+    # would be unused yet still consume the nodeport range and open a port on every node.
+    # Set to true only if you actually need NodePort access alongside the LoadBalancer IP.
+    # @default -- false
+    allocateLoadBalancerNodePorts: ""
 
 # -- configuration for the liveness probe. By default, the liveness probe is executed against `{{ .Values.actuator.port }}/{{ .Values.actuator.basePath }}/{{ .Values.actuator.contextPath }}/health/liveness`
 # @default -- see below

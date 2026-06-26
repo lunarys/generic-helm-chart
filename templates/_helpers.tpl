@@ -165,6 +165,39 @@ ipFamilies:
 {{- end -}}
 {{- end -}}
 
+{{/*
+  Helper: emit allocateLoadBalancerNodePorts line (or nothing).
+
+  Motivation: Kubernetes defaults allocateLoadBalancerNodePorts to true for LoadBalancer
+  services, which causes Kubernetes to allocate a NodePort for every service port. In a
+  Cilium kube-proxy-replacement + LB-IPAM cluster, traffic is routed directly to the
+  LoadBalancer IP via eBPF/DSR, so those NodePorts are unused. They only waste the
+  nodeport range and open an extra port on every node.
+
+  Resolution:
+    - If the resolved service type is NOT LoadBalancer → emit nothing (field must be absent;
+      it is only meaningful for LoadBalancer services).
+    - If type IS LoadBalancer → emit `true` only when the service explicitly set
+      allocateLoadBalancerNodePorts: true; otherwise emit `false` (the chart's opinionated
+      default — both "unset" and an explicit false resolve to false, which is safe for
+      Cilium LB-IPAM clusters).
+
+  Call with the same dict used by other service helpers:
+    "svc" <per-service config map> "ctx" <root context $>
+    "resolvedType" <string from ju-common.service.resolvedType>
+*/}}
+{{- define "ju-common.service.allocateNodePorts" -}}
+{{- $svc := .svc -}}
+{{- $resolvedType := .resolvedType -}}
+{{- if eq $resolvedType "LoadBalancer" -}}
+{{- if eq (toString (get $svc "allocateLoadBalancerNodePorts")) "true" -}}
+allocateLoadBalancerNodePorts: true
+{{- else -}}
+allocateLoadBalancerNodePorts: false
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 
 {{/*
 Resolve cert-manager ClusterIssuer for the internal ingress.

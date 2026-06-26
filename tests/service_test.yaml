@@ -154,3 +154,48 @@ tests:
           path: spec.externalIPs
       - notExists:
           path: spec.ipFamilyPolicy
+
+  # Unit F — allocateLoadBalancerNodePorts
+
+  # F-1: LB via loadBalancerIPs → suppressed (default false)
+  - it: "loadBalancerIPs LB service defaults allocateLoadBalancerNodePorts to false"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-2: dynamic LB (explicit type, no IPs) → suppressed
+  - it: "explicit type LoadBalancer defaults allocateLoadBalancerNodePorts to false"
+    set:
+      service.enabled: true
+      service.type: LoadBalancer
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  # F-3: user override wins (true)
+  - it: "allocateLoadBalancerNodePorts user override true is honored"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+      service.allocateLoadBalancerNodePorts: true
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: true
+
+  # F-4: non-LoadBalancer → field absent
+  - it: "ClusterIP service omits allocateLoadBalancerNodePorts entirely"
+    set:
+      service.enabled: true
+      service.port: 80
+      service.targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.allocateLoadBalancerNodePorts
