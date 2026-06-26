@@ -329,6 +329,30 @@ tests:
           path: spec.ipFamilyPolicy
           value: SingleStack
 
+  # Case 7b: user ipFamilies passthrough wins without an explicit ipFamilyPolicy
+  - it: "user ipFamilies is honored verbatim without setting ipFamilyPolicy"
+    set:
+      services:
+        test:
+          enabled: true
+          ports:
+            http:
+              enabled: true
+              protocol: TCP
+              port: 80
+              targetPort: 8080
+          loadBalancerIPs:
+            - 10.0.4.5
+          ipFamilies:
+            - IPv4
+    asserts:
+      - equal:
+          path: spec.ipFamilies
+          value:
+            - IPv4
+      - notExists:
+          path: spec.ipFamilyPolicy
+
   # Case 8: no IPs → default type (ClusterIP), clean
   - it: "no IPs keeps default ClusterIP type and omits LB fields"
     set:

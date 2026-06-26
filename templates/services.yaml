@@ -20,7 +20,7 @@ metadata:
     {{- $annotations | nindent 4 }}
   {{- end }}
 spec:
-  type: {{ if $resolvedType }}{{ $resolvedType }}{{ else }}ClusterIP{{ end }}
+  type: {{ $resolvedType }}
   {{- if $ipFamily }}
   {{ $ipFamily | nindent 2 | trim }}
   {{- end }}

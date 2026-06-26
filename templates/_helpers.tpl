@@ -28,16 +28,21 @@ Both defaultMiddlewares and traefikConfig.middlewares accept a comma-separated s
 
 
 {{/*
-Compute LB IPAM service fields for a single service config dict.
-Call with a dict: "svc" <per-service config map> "ctx" <root context $>
-Emits a YAML fragment (indented 0) containing:
-  - resolved type (if IPs present → LoadBalancer, else passthrough)
-  - metadata.annotations block (auto lbipam + user annotations, user wins)
-  - metadata.labels block (auto pool label + user labels, user wins)
-  - ipFamilyPolicy / ipFamilies (auto dual-stack or user override)
+LB-IPAM service helpers — intent-based LoadBalancer IP exposure.
+An app author sets only loadBalancerIPs (or the deprecated externalIPs alias); these
+helpers derive the Cilium LB-IPAM plumbing. Each helper takes a dict:
+  "svc" <per-service config map> "ctx" <root context $>
+and the calling template combines their output:
+  - ju-common.service.resolvedType   → final spec.type string
+  - ju-common.service.annotations    → metadata.annotations (auto lbipam + user, user wins)
+  - ju-common.service.extraLabels    → extra metadata.labels (auto pool label + user, user wins)
+  - ju-common.service.ipFamily       → spec.ipFamilyPolicy / spec.ipFamilies block
+  - ju-common.service.isIPv6         → internal: classify a single IP string
 
 Usage in templates:
-  {{- include "ju-common.service.lbipam" (dict "svc" $svc "ctx" $) | nindent 0 }}
+  {{- $svcCtx := dict "svc" $svc "ctx" $ }}
+  {{- $resolvedType := include "ju-common.service.resolvedType" $svcCtx }}
+  ... (see templates/service.yaml and templates/services.yaml)
 */}}
 
 {{/*
@@ -48,20 +53,21 @@ Usage in templates:
 {{- end -}}
 
 {{/*
-  Helper: emit the resolved service type.
-  If IPs present and user didn't set type → LoadBalancer.
-  If no IPs → empty string (caller keeps its own default).
-  Emits just the value string (no key).
+  Helper: emit the FINAL resolved service type string.
+  Precedence: explicit user-set type > LoadBalancer (when IPs present) > ClusterIP.
+  Always emits a concrete value, so callers can use it verbatim.
 */}}
 {{- define "ju-common.service.resolvedType" -}}
 {{- $svc := .svc -}}
 {{- $lbIPs := $svc.loadBalancerIPs | default list -}}
 {{- $extIPs := $svc.externalIPs | default list -}}
 {{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
-{{- if $ips -}}
-  {{- $svc.type | default "LoadBalancer" -}}
+{{- if $svc.type -}}
+  {{- $svc.type -}}
+{{- else if $ips -}}
+  {{- "LoadBalancer" -}}
 {{- else -}}
-  {{- $svc.type | default "" -}}
+  {{- "ClusterIP" -}}
 {{- end -}}
 {{- end -}}
 
@@ -115,10 +121,12 @@ Usage in templates:
 
 {{/*
   Helper: emit ipFamilyPolicy and ipFamilies lines (or nothing).
-  Auto-detection: both IPv4 and IPv6 in IPs AND user didn't set ipFamilyPolicy
-    → RequireDualStack + [IPv4, IPv6].
-  User-set ipFamilyPolicy always wins (rendered verbatim).
-  User-set ipFamilies always wins (rendered verbatim).
+  The two fields are INDEPENDENT power-user overrides; each is decided on its own:
+    - ipFamilyPolicy = user value if set, else RequireDualStack when both an IPv4
+      and an IPv6 are present, else nothing.
+    - ipFamilies = user value (verbatim) if set, else [IPv4, IPv6] when both
+      families present, else nothing.
+  A user can set one field without the other.
 */}}
 {{- define "ju-common.service.ipFamily" -}}
 {{- $svc := .svc -}}
@@ -127,36 +135,33 @@ Usage in templates:
 {{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
 {{- $userPolicy := $svc.ipFamilyPolicy | default "" -}}
 {{- $userFamilies := $svc.ipFamilies | default list -}}
+{{- /* Detect whether both IP families are present (drives the auto defaults). */ -}}
+{{- $hasV4 := false -}}
+{{- $hasV6 := false -}}
+{{- range $ip := $ips -}}
+  {{- if include "ju-common.service.isIPv6" $ip -}}
+    {{- $hasV6 = true -}}
+  {{- else -}}
+    {{- $hasV4 = true -}}
+  {{- end -}}
+{{- end -}}
+{{- $dualStack := and $hasV4 $hasV6 -}}
+{{- /* ipFamilyPolicy: user wins, else auto RequireDualStack when dual-stack. */ -}}
 {{- if $userPolicy -}}
 ipFamilyPolicy: {{ $userPolicy }}
-  {{- if $userFamilies }}
-ipFamilies:
-    {{- range $userFamilies }}
-  - {{ . }}
-    {{- end }}
-  {{- end }}
-{{- else if $ips -}}
-  {{- /* auto dual-stack detection */ -}}
-  {{- $hasV4 := false -}}
-  {{- $hasV6 := false -}}
-  {{- range $ip := $ips -}}
-    {{- if include "ju-common.service.isIPv6" $ip -}}
-      {{- $hasV6 = true -}}
-    {{- else -}}
-      {{- $hasV4 = true -}}
-    {{- end -}}
-  {{- end -}}
-  {{- if and $hasV4 $hasV6 -}}
+{{- else if $dualStack -}}
 ipFamilyPolicy: RequireDualStack
-ipFamilies:
-  - IPv4
-  - IPv6
-  {{- end -}}
-{{- else if $userFamilies -}}
+{{- end -}}
+{{- /* ipFamilies: user wins (verbatim), else auto [IPv4, IPv6] when dual-stack. */ -}}
+{{- if $userFamilies }}
 ipFamilies:
   {{- range $userFamilies }}
   - {{ . }}
   {{- end }}
+{{- else if $dualStack }}
+ipFamilies:
+  - IPv4
+  - IPv6
 {{- end -}}
 {{- end -}}
 

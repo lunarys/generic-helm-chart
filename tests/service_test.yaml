@@ -122,6 +122,22 @@ tests:
           path: spec.ipFamilyPolicy
           value: SingleStack
 
+  # Case 7b: user ipFamilies passthrough wins without an explicit ipFamilyPolicy
+  - it: "user ipFamilies is honored verbatim without setting ipFamilyPolicy"
+    set:
+      service.enabled: true
+      service.loadBalancerIPs:
+        - 10.0.4.5
+      service.ipFamilies:
+        - IPv4
+    asserts:
+      - equal:
+          path: spec.ipFamilies
+          value:
+            - IPv4
+      - notExists:
+          path: spec.ipFamilyPolicy
+
   # Case 8: no IPs → default type, clean (no lbipam annotation, no externalIPs, no ipFamilyPolicy)
   - it: "no IPs keeps default type and omits LB fields"
     set:
