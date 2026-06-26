@@ -31,6 +31,9 @@ spec:
       protocol: {{ .Values.service.protocol }}
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
   selector:
     {{- include "ju-common.selectorLabels" . | nindent 4 }}
 {{- end }}

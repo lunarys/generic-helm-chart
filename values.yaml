@@ -246,6 +246,11 @@ service:
   # Set to true only if you actually need NodePort access alongside the LoadBalancer IP.
   # @default -- false
   allocateLoadBalancerNodePorts: ""
+  # -- Static NodePort for the default service port. Only valid when the service allocates
+  # node ports (type NodePort, or LoadBalancer with allocateLoadBalancerNodePorts=true);
+  # leave unset to let Kubernetes auto-assign from the nodeport range.
+  # @default -- none (auto-assigned)
+  nodePort: ""
 
 # -- Additional Kubernetes services configuration.
 # This allows you to define extra services besides the default one.
@@ -271,6 +276,11 @@ services:
         # -- Target port on the pod to route traffic to.
         # @default -- `.port`
         targetPort: 8080
+        # -- Static NodePort for this service port. Only valid when the service allocates
+        # node ports (type NodePort, or LoadBalancer with allocateLoadBalancerNodePorts=true);
+        # leave unset to let Kubernetes auto-assign from the nodeport range.
+        # @default -- none (auto-assigned)
+        nodePort: ""
     # -- List of IPs to expose the service on via Cilium LB-IPAM (type: LoadBalancer).
     # The chart auto-derives the pool label, the lbipam.cilium.io/ips annotation, and dual-stack
     # settings. Takes precedence over `externalIPs` when both are set.

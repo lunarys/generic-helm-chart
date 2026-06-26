@@ -199,3 +199,28 @@ tests:
     asserts:
       - notExists:
           path: spec.allocateLoadBalancerNodePorts
+
+  # Unit G — static nodePort on primary service
+
+  # G-1: nodePort set → rendered
+  - it: "service.nodePort is rendered when set"
+    set:
+      service.enabled: true
+      service.type: NodePort
+      service.port: 80
+      service.targetPort: 8080
+      service.nodePort: 30080
+    asserts:
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
+
+  # G-2: nodePort absent → field omitted
+  - it: "service.nodePort is absent when not set"
+    set:
+      service.enabled: true
+      service.port: 80
+      service.targetPort: 8080
+    asserts:
+      - notExists:
+          path: spec.ports[0].nodePort

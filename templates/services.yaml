@@ -35,6 +35,9 @@ spec:
       protocol: {{ $port.protocol | default "TCP" }}
       port: {{ $port.port | required "port for a service in services is missing" }}
       targetPort: {{ $port.targetPort | default $port.port }}
+      {{- if $port.nodePort }}
+      nodePort: {{ $port.nodePort }}
+      {{- end }}
     {{- end }}
     {{- end }}
   selector:
