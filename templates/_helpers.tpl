@@ -85,7 +85,7 @@ Usage in templates:
   {{- $_ := set $auto "lbipam.cilium.io/ips" (join "," $ips) -}}
 {{- end -}}
 {{- $userAnnotations := $svc.annotations | default dict -}}
-{{- /* Merge: start with auto, then overlay user (user wins on conflict) */ -}}
+{{- /* Merge user over auto: dest=user (deep-copied so Values is untouched), src=auto fills gaps; user wins on conflict */ -}}
 {{- $merged := merge (deepCopy $userAnnotations) $auto -}}
 {{- if $merged -}}
 {{ toYaml $merged }}
