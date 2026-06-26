@@ -28,6 +28,140 @@ Both defaultMiddlewares and traefikConfig.middlewares accept a comma-separated s
 
 
 {{/*
+Compute LB IPAM service fields for a single service config dict.
+Call with a dict: "svc" <per-service config map> "ctx" <root context $>
+Emits a YAML fragment (indented 0) containing:
+  - resolved type (if IPs present → LoadBalancer, else passthrough)
+  - metadata.annotations block (auto lbipam + user annotations, user wins)
+  - metadata.labels block (auto pool label + user labels, user wins)
+  - ipFamilyPolicy / ipFamilies (auto dual-stack or user override)
+
+Usage in templates:
+  {{- include "ju-common.service.lbipam" (dict "svc" $svc "ctx" $) | nindent 0 }}
+*/}}
+
+{{/*
+  Helper: returns "true" if the IP string is IPv6 (contains colon).
+*/}}
+{{- define "ju-common.service.isIPv6" -}}
+{{- if contains ":" . -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit the resolved service type.
+  If IPs present and user didn't set type → LoadBalancer.
+  If no IPs → empty string (caller keeps its own default).
+  Emits just the value string (no key).
+*/}}
+{{- define "ju-common.service.resolvedType" -}}
+{{- $svc := .svc -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- if $ips -}}
+  {{- $svc.type | default "LoadBalancer" -}}
+{{- else -}}
+  {{- $svc.type | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit the annotations map (merged: auto + user; user wins).
+  Emits a YAML map fragment or empty string.
+*/}}
+{{- define "ju-common.service.annotations" -}}
+{{- $svc := .svc -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- $auto := dict -}}
+{{- if $ips -}}
+  {{- $_ := set $auto "lbipam.cilium.io/ips" (join "," $ips) -}}
+{{- end -}}
+{{- $userAnnotations := $svc.annotations | default dict -}}
+{{- /* Merge: start with auto, then overlay user (user wins on conflict) */ -}}
+{{- $merged := merge (deepCopy $userAnnotations) $auto -}}
+{{- if $merged -}}
+{{ toYaml $merged }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit extra labels map (merged: auto pool label + user labels; user wins).
+  Pool label key/value are read from global.baseSettings.loadBalancerPool (with sane defaults),
+  so they can be overridden cluster-wide via ArgoCD app values.
+  Emits a YAML map fragment or empty string.
+*/}}
+{{- define "ju-common.service.extraLabels" -}}
+{{- $svc := .svc -}}
+{{- $ctx := .ctx -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- $auto := dict -}}
+{{- if $ips -}}
+  {{- $bs := ($ctx.Values.global.baseSettings | default dict) -}}
+  {{- $lbPoolCfg := (get $bs "loadBalancerPool" | default dict) -}}
+  {{- $poolKey := (get $lbPoolCfg "labelKey" | default "custom.network/lb-pool") -}}
+  {{- $poolVal := (get $lbPoolCfg "labelValue" | default "static") -}}
+  {{- $_ := set $auto $poolKey $poolVal -}}
+{{- end -}}
+{{- $userLabels := $svc.labels | default dict -}}
+{{- $merged := merge (deepCopy $userLabels) $auto -}}
+{{- if $merged -}}
+{{ toYaml $merged }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+  Helper: emit ipFamilyPolicy and ipFamilies lines (or nothing).
+  Auto-detection: both IPv4 and IPv6 in IPs AND user didn't set ipFamilyPolicy
+    → RequireDualStack + [IPv4, IPv6].
+  User-set ipFamilyPolicy always wins (rendered verbatim).
+  User-set ipFamilies always wins (rendered verbatim).
+*/}}
+{{- define "ju-common.service.ipFamily" -}}
+{{- $svc := .svc -}}
+{{- $lbIPs := $svc.loadBalancerIPs | default list -}}
+{{- $extIPs := $svc.externalIPs | default list -}}
+{{- $ips := ternary $lbIPs $extIPs (not (empty $lbIPs)) -}}
+{{- $userPolicy := $svc.ipFamilyPolicy | default "" -}}
+{{- $userFamilies := $svc.ipFamilies | default list -}}
+{{- if $userPolicy -}}
+ipFamilyPolicy: {{ $userPolicy }}
+  {{- if $userFamilies }}
+ipFamilies:
+    {{- range $userFamilies }}
+  - {{ . }}
+    {{- end }}
+  {{- end }}
+{{- else if $ips -}}
+  {{- /* auto dual-stack detection */ -}}
+  {{- $hasV4 := false -}}
+  {{- $hasV6 := false -}}
+  {{- range $ip := $ips -}}
+    {{- if include "ju-common.service.isIPv6" $ip -}}
+      {{- $hasV6 = true -}}
+    {{- else -}}
+      {{- $hasV4 = true -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if and $hasV4 $hasV6 -}}
+ipFamilyPolicy: RequireDualStack
+ipFamilies:
+  - IPv4
+  - IPv6
+  {{- end -}}
+{{- else if $userFamilies -}}
+ipFamilies:
+  {{- range $userFamilies }}
+  - {{ . }}
+  {{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
 Resolve cert-manager ClusterIssuer for the internal ingress.
 Resolution order: ingress.tls.clusterIssuer
   → global.baseSettings.tls.internalClusterIssuer → global.baseSettings.tls.clusterIssuer

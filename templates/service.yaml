@@ -1,12 +1,27 @@
 {{- if .Values.service.enabled }}
+{{- $svcCtx := dict "svc" .Values.service "ctx" . }}
+{{- $resolvedType := include "ju-common.service.resolvedType" $svcCtx }}
+{{- $annotations := include "ju-common.service.annotations" $svcCtx }}
+{{- $extraLabels := include "ju-common.service.extraLabels" $svcCtx }}
+{{- $ipFamily := include "ju-common.service.ipFamily" $svcCtx }}
 kind: Service
 apiVersion: v1
 metadata:
   name: {{ include "ju-common.serviceName" . }}
   labels:
     {{- include "ju-common.labels" . | nindent 4 }}
+    {{- if $extraLabels }}
+    {{- $extraLabels | nindent 4 }}
+    {{- end }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ if $resolvedType }}{{ $resolvedType }}{{ else }}{{ .Values.service.type | default "ClusterIP" }}{{ end }}
+  {{- if $ipFamily }}
+  {{ $ipFamily | nindent 2 | trim }}
+  {{- end }}
   ports:
     - name: default-service-endpoint
       protocol: {{ .Values.service.protocol }}
@@ -14,10 +29,4 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
   selector:
     {{- include "ju-common.selectorLabels" . | nindent 4 }}
-  {{- if .Values.service.externalIPs }}
-  externalIPs:
-    {{- range $ip := .Values.service.externalIPs }}
-    - {{ $ip }}
-    {{- end }}
-  {{- end }}
 {{- end }}

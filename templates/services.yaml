@@ -1,5 +1,10 @@
 {{- range $name, $service := .Values.services }}
 {{- if $service.enabled }}
+{{- $svcCtx := dict "svc" $service "ctx" $ }}
+{{- $resolvedType := include "ju-common.service.resolvedType" $svcCtx }}
+{{- $annotations := include "ju-common.service.annotations" $svcCtx }}
+{{- $extraLabels := include "ju-common.service.extraLabels" $svcCtx }}
+{{- $ipFamily := include "ju-common.service.ipFamily" $svcCtx }}
 ---
 kind: Service
 apiVersion: v1
@@ -7,8 +12,18 @@ metadata:
   name: {{ include "ju-common.serviceName" $ }}-{{ $name }}
   labels:
     {{- include "ju-common.labels" $ | nindent 4 }}
+    {{- if $extraLabels }}
+    {{- $extraLabels | nindent 4 }}
+    {{- end }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
 spec:
-  type: {{ $service.type | default "ClusterIP" }}
+  type: {{ if $resolvedType }}{{ $resolvedType }}{{ else }}ClusterIP{{ end }}
+  {{- if $ipFamily }}
+  {{ $ipFamily | nindent 2 | trim }}
+  {{- end }}
   ports:
     {{- range $portName, $port := $service.ports }}
     {{- if or (not (hasKey $port "enabled")) $port.enabled }}
@@ -20,11 +35,5 @@ spec:
     {{- end }}
   selector:
     {{- include "ju-common.selectorLabels" $ | nindent 4 }}
-  {{- if $service.externalIPs }}
-  externalIPs:
-    {{- range $ip := $service.externalIPs }}
-    - {{ $ip }}
-    {{- end }}
-  {{- end }}
 {{- end }}
 {{- end }}
