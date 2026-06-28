@@ -4,7 +4,9 @@ templates:
   - cronjob.yaml
 
 tests:
-  - it: should render CronJob with default schedule
+  - it: should render a CronJob with the configured schedule
+    set:
+      schedule: "0 * * * *"
     asserts:
       - isKind:
           of: CronJob

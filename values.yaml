@@ -582,7 +582,8 @@ autoscale:
 # -- CronJob configuration (see charts/.generic-cronjob/values.yaml for all options)
 cronjob:
   enabled: false
-  schedule: "0 * * * *"
+  # schedule has no default — set it when cronjob.enabled is true.
+  schedule: ""
   image:
     name: ""
     tag: ""

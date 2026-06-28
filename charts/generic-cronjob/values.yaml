@@ -5,8 +5,9 @@ nameOverride: ""
 # -- Override the full name for the CronJob
 fullnameOverride: ""
 
-# -- The schedule in Cron format, see https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule
-schedule: "0 * * * *"
+# -- The schedule in Cron format. No default — the consumer must set it (like image; an empty value renders an invalid CronJob).
+# See https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule
+schedule: ""
 # -- The time zone for the CronJob schedule (e.g., "Europe/Berlin"). Requires Kubernetes 1.24+.
 timeZone: "Europe/Berlin"
 # -- Specifies how to treat concurrent executions of a Job. Valid values: Allow, Forbid, Replace
