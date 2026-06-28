@@ -49,7 +49,9 @@ The root chart declares all helper charts as `dependencies` in `Chart.yaml`. Sub
 
 ### Template helpers
 
-Shared label/name helpers follow the pattern `ju-common.*` (e.g., `ju-common.fullname`, `ju-common.labels`, `ju-common.image`). These are defined within the chart's own `_helpers.tpl` (not in a separate library chart).
+Shared label/name helpers follow the pattern `ju-common.*` (e.g., `ju-common.fullname`, `ju-common.labels`, `ju-common.image`). These are defined within the chart's own `_helpers.tpl` (not in a separate library chart). Chart-identity helpers are per-chart (e.g. `generic-cronjob.*` mirrors `ju-common.*` for the cronjob).
+
+One cross-cutting convention helper is owned by the subchart instead: `networkpolicy.workloadLabels` lives in `charts/networkpolicy/templates/_helpers.tpl` and is called from each consumer's **pod template** with the networkpolicy values subtree as context — `include "networkpolicy.workloadLabels" .Values.networkpolicy`. It derives the `custom.network/*` pod labels (from `fromNetworkLabels` / `toNetworkLabels` / `fromExternalIngressController` / `toDefaultPostgresDb`) that peers' policies key on. Passing the subtree (not `.`) keeps it independent of where the block is nested.
 
 ### externalsecrets
 
@@ -67,8 +69,16 @@ Handles SMB mounts with optional Kubernetes Secret or ExternalSecret for credent
 
 The `config` key in `values.yaml` supports three mount modes:
 - `config.mount.env: true` — inject all keys as env vars via `envFrom`
-- `config.mount.path: /some/dir` — mount the ConfigMap as a directory
-- `config.mount.subPath: /exact/file.yaml` — mount a single key as a file at an exact path
+- `config.mount.path: /some/dir` — mount the ConfigMap as a directory (any number of keys)
+- `config.mount.subPath: /exact/file.yaml` — mount a single key as a file at an exact path. **Requires exactly one key** in `config.values`; the template `fail`s on multiple keys (use `path` mode for several files). Note: `keys` returns unordered map order in Helm — always `sortAlpha` before positional access (`first`/`index`).
+
+### networkpolicy preset selector & name
+
+The preset CiliumNetworkPolicy's endpoint selector and resource name are **injectable** so a consumer can scope them to its own workload:
+- `preset.useChartEndpointSelector: true` selects via `preset.selectorTemplate` (default `ju-common.selectorLabels`, release-based — used by generic-service).
+- `preset.nameTemplate` derives the resource name (default `<release>-preset-cnp`).
+
+Both templates render **in the networkpolicy chart's context**, so a consumer's provider may use only context-independent data — `.Release.*`, `.Values.global.*`, constants — never `.Chart.Name` or local `.Values` (those resolve to the networkpolicy chart). generic-cronjob uses this to give its policy a distinct component-based selector (`generic-cronjob.netpolSelector`) and a non-colliding name (`generic-cronjob.netpolName`). Limitation: the selector/name can't be made unique per-instance across multiple consumers in one release — override `preset.endpointSelector` + `preset.name` explicitly for that.
 
 ### Security context presets
 

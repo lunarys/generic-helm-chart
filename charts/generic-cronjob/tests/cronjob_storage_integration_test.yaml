@@ -1,0 +1,90 @@
+suite: Test CronJob Storage Integration
+
+templates:
+  - cronjob.yaml
+
+tests:
+  # Test that volumeMounts/volumes are not rendered when storage is disabled
+  - it: should not render volumeMounts when storage subcharts are disabled
+    set:
+      smbstorage:
+        enabled: false
+      longhornstorage:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+
+  - it: should not render volumes when storage subcharts are disabled
+    set:
+      smbstorage:
+        enabled: false
+      longhornstorage:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.volumes
+
+  # Test that volumeMounts/volumes ARE rendered when SMB storage is enabled
+  - it: should render volumeMounts section when smbstorage is enabled
+    set:
+      smbstorage:
+        enabled: true
+        volumes:
+          data:
+            mount:
+              path: /data
+            smb:
+              host: nas.example.com
+              share: myshare
+            secret:
+              username: user
+              password: pass
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+
+  - it: should render volumes section when smbstorage is enabled
+    set:
+      smbstorage:
+        enabled: true
+        volumes:
+          data:
+            mount:
+              path: /data
+            smb:
+              host: nas.example.com
+              share: myshare
+            secret:
+              username: user
+              password: pass
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.volumes
+
+  # Test that volumeMounts/volumes ARE rendered when Longhorn storage is enabled
+  - it: should render volumeMounts section when longhornstorage is enabled
+    set:
+      longhornstorage:
+        enabled: true
+        volumes:
+          data:
+            mount:
+              path: /data
+            size: 10Gi
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+
+  - it: should render volumes section when longhornstorage is enabled
+    set:
+      longhornstorage:
+        enabled: true
+        volumes:
+          data:
+            mount:
+              path: /data
+            size: 10Gi
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.volumes

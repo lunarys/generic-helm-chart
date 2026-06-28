@@ -356,36 +356,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Pod labels
 */}}
 {{- define "ju-common.podLabels" -}}
-{{ include "ju-common.networkpolicyLabels" . }}
+{{ include "networkpolicy.workloadLabels" .Values.networkpolicy }}
 {{ include "ju-common.selectorLabels" . }}
-{{- end }}
-
-{{/*
-Networkpolicy labels - Used for simplified networkpolicy handling
-*/}}
-{{- define "ju-common.networkpolicyLabels" -}}
-{{- if and .Values.networkpolicy.enabled .Values.networkpolicy.preset.enabled -}}
-  {{- range $fromNetworkLabel := .Values.networkpolicy.preset.ingress.fromNetworkLabels -}}
-    {{- nindent 0 "" }}{{ include "ju-common.networkpolicyLabels.label" $fromNetworkLabel }}: {{ $.Values.networkpolicy.defaults.fromNetworkLabelValue }}
-  {{- end }}
-  {{- range $toNetworkLabel := .Values.networkpolicy.preset.egress.toNetworkLabels -}}
-    {{- nindent 0 "" }}{{ include "ju-common.networkpolicyLabels.label" $toNetworkLabel }}: {{ $.Values.networkpolicy.defaults.toNetworkLabelValue }}
-  {{- end }}
-  {{- if .Values.networkpolicy.preset.ingress.fromExternalIngressController -}}
-    {{- nindent 0 "" }}{{ .Values.networkpolicy.defaults.customExternalIngressNetworkLabel }}: {{ .Values.networkpolicy.defaults.fromNetworkLabelValue }}
-  {{- end }}
-  {{- if .Values.networkpolicy.preset.egress.toDefaultPostgresDb -}}
-    {{- nindent 0 "" }}{{ .Values.networkpolicy.defaults.defaultPostgresDbNetworkLabel }}: {{ .Values.networkpolicy.defaults.toNetworkLabelValue }}
-  {{- end }}
-{{- end }}
-{{- end }}
-
-{{- define "ju-common.networkpolicyLabels.label" -}}
-{{- if kindIs "string" . -}}
-{{ . }}
-{{- else -}}
-{{ .label }}
-{{- end -}}
 {{- end }}
 
 

@@ -40,6 +40,18 @@ preset:
   # -- Name of the preset CiliumNetworkPolicy resource
   name: ""
 
+  # Named template a consumer chart can inject to derive the resource name,
+  # used when `name` is empty. Lets a co-deployed consumer (e.g. a CronJob) avoid
+  # colliding with the parent's policy name. Same context rule as selectorTemplate:
+  # may use only .Release.*, .Values.global.*, and constants.
+  nameTemplate: ""
+
+  # Named template a consumer chart can inject to render the chart endpoint selector.
+  # Defaults to "ju-common.selectorLabels" (release-based, used by generic-service).
+  # The template is invoked in the networkpolicy chart's context, so it may use only
+  # context-independent data: .Release.*, .Values.global.*, and constants.
+  selectorTemplate: ""
+
   # -- Endpoint selector to target specific pods, defaults to all pods in the namespace.
   endpointSelector: {}
 

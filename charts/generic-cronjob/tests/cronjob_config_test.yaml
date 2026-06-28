@@ -1,0 +1,284 @@
+suite: Test CronJob Config Configuration
+
+templates:
+  - cronjob.yaml
+  - configmap.yaml
+
+tests:
+  # ConfigMap creation tests
+  - it: should create ConfigMap when config is enabled with values
+    template: configmap.yaml
+    set:
+      config:
+        enabled: true
+        values:
+          app.yaml: |
+            server:
+              port: 8080
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - exists:
+          path: data["app.yaml"]
+
+  - it: should not create ConfigMap when config is disabled
+    template: configmap.yaml
+    set:
+      config:
+        enabled: false
+        values:
+          app.yaml: "content"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create ConfigMap when values are empty
+    template: configmap.yaml
+    set:
+      config:
+        enabled: true
+        values: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should use custom ConfigMap name
+    template: configmap.yaml
+    set:
+      config:
+        enabled: true
+        name: "my-custom-config"
+        values:
+          app.yaml: "content"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: "my-custom-config"
+
+  - it: should use default ConfigMap name
+    template: configmap.yaml
+    set:
+      config:
+        enabled: true
+        values:
+          app.yaml: "content"
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: ^.*-config$
+
+  - it: should handle multiple config values
+    template: configmap.yaml
+    set:
+      config:
+        enabled: true
+        values:
+          app.yaml: "content1"
+          db.yaml: "content2"
+          settings.json: '{"key": "value"}'
+    asserts:
+      - exists:
+          path: data["app.yaml"]
+      - exists:
+          path: data["db.yaml"]
+      - exists:
+          path: data["settings.json"]
+
+  # Mount as environment variables tests
+  - it: should mount config as environment variables when mount.env is true
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          env: true
+        values:
+          app.yaml: "content"
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: RELEASE-NAME-generic-cronjob-config
+
+  - it: should not mount config as envFrom when mount.env is false
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          env: false
+        values:
+          app.yaml: "content"
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          value: null
+
+  - it: should use custom name in envFrom when specified
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        name: "my-custom-config"
+        mount:
+          env: true
+        values:
+          app.yaml: "content"
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: my-custom-config
+
+  # Mount as files (directory) tests
+  - it: should mount config as files when mount.path is set
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          path: "/etc/config"
+        values:
+          app.yaml: "content"
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-values-mount-via-path
+            mountPath: /etc/config
+            readOnly: true
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: config-values-mount-via-path
+            configMap:
+              name: RELEASE-NAME-generic-cronjob-config
+
+  - it: should not include subPath when mounting as directory
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          path: "/etc/config"
+        values:
+          app.yaml: "content"
+          db.yaml: "content2"
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-values-mount-via-path
+            mountPath: /etc/config
+            readOnly: true
+
+  # Mount as single file (subPath) tests
+  - it: should mount config as single file when mount.subPath is set
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          subPath: "/etc/app/config.yaml"
+        values:
+          config.yaml: |
+            server:
+              port: 8080
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-values-mount-via-subpath
+            mountPath: /etc/app/config.yaml
+            subPath: config.yaml
+            readOnly: true
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: config-values-mount-via-subpath
+            configMap:
+              name: RELEASE-NAME-generic-cronjob-config
+              items:
+                - key: config.yaml
+                  path: config.yaml
+
+  - it: should fail when subPath is set with multiple config values (single-key only)
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          subPath: "/etc/app/config.yaml"
+        values:
+          first-key.yaml: "content"
+          second-key.yaml: "content2"
+    asserts:
+      - failedTemplate:
+          errorMessage: "config.mount.subPath supports only a single key in config.values; use config.mount.path to mount multiple files"
+
+  # No mount tests
+  - it: should not create volumeMounts when config mount is not specified
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        values:
+          app.yaml: "content"
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+
+  - it: should not create volumes when config mount is not specified
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        values:
+          app.yaml: "content"
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.volumes
+
+  # Combined config and extraConfig tests
+  - it: should work with both config.mount.env and extraConfig.secrets
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          env: true
+        values:
+          app.yaml: "content"
+      extraConfig:
+        secrets:
+          - my-secret
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          count: 2
+
+  - it: should work with both config file mount and extraConfig volumeMounts
+    template: cronjob.yaml
+    set:
+      config:
+        enabled: true
+        mount:
+          path: "/etc/config"
+        values:
+          app.yaml: "content"
+      extraConfig:
+        volumeMounts:
+          - name: data
+            mountPath: /data
+            emptyDir: {}
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          count: 2
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          count: 2

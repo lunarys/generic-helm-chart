@@ -2,14 +2,33 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: {{ .Values.preset.name | default (printf "%s-preset-cnp" (coalesce .Values.nameOverride .Values.global.nameOverride .Release.Name)) }}
+  {{/*
+    Resource name precedence: explicit preset.name > injected preset.nameTemplate
+    > release-based default. nameTemplate lets a consumer chart (e.g. a CronJob
+    co-deployed with a Deployment) give its policy a distinct name and avoid a
+    collision with the parent's policy. Same context rule as selectorTemplate:
+    the template may use only .Release.*, .Values.global.*, and constants.
+  */}}
+  {{- $presetName := .Values.preset.name }}
+  {{- if and (not $presetName) .Values.preset.nameTemplate }}
+  {{- $presetName = include .Values.preset.nameTemplate . }}
+  {{- end }}
+  name: {{ $presetName | default (printf "%s-preset-cnp" (coalesce .Values.nameOverride .Values.global.nameOverride .Release.Name)) }}
 spec:
   {{- if .Values.preset.endpointSelector }}
   endpointSelector: {{ toYaml .Values.preset.endpointSelector | nindent 4 }}
   {{- else if .Values.preset.useChartEndpointSelector }}
   endpointSelector:
     matchLabels:
-      {{- include "ju-common.selectorLabels" . | nindent 6 }}
+      {{/*
+        Selector provider is injectable so consumers other than generic-service
+        can supply their own pod identity. This template is invoked in THIS
+        (networkpolicy) chart's context, so a provider may use only context-
+        independent data: .Release.*, .Values.global.*, and constants. It must
+        NOT reference .Chart.Name or local .Values — those resolve to the
+        networkpolicy chart, not the consumer.
+      */}}
+      {{- include (.Values.preset.selectorTemplate | default "ju-common.selectorLabels") . | nindent 6 }}
   {{- else }}
   endpointSelector: {}
   {{- end }}

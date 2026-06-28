@@ -1,0 +1,18 @@
+apiVersion: v2
+name: generic-cronjob
+description: Generic CronJob helper - template kubernetes jobs
+type: application
+version: 0.1.0
+dependencies:
+  - name: externalsecrets
+    version: 0.1.0
+    condition: externalsecrets.enabled
+  - name: longhornstorage
+    version: 0.1.0
+    condition: longhornstorage.enabled
+  - name: networkpolicy
+    version: 0.1.0
+    condition: networkpolicy.enabled
+  - name: smbstorage
+    version: 0.1.0
+    condition: smbstorage.enabled

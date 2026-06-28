@@ -1,0 +1,259 @@
+suite: Test CronJob Container and Environment Configuration
+
+templates:
+  - cronjob.yaml
+
+tests:
+  # Image configuration tests
+  - it: should render image from components
+    set:
+      image:
+        registry: "docker.io"
+        repository: "myorg"
+        name: "myapp"
+        tag: "v1.2.3"
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: "docker.io/myorg/myapp:v1.2.3"
+
+  - it: should render image without registry
+    set:
+      image:
+        name: "myapp"
+        tag: "latest"
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: "myapp:latest"
+
+  - it: should render image pull policy
+    set:
+      image:
+        name: "myapp"
+        pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].imagePullPolicy
+          value: "Always"
+
+  # Command and args tests
+  - it: should render command when set
+    set:
+      image:
+        name: "myapp"
+        command: ["python", "script.py"]
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command
+          value: ["python", "script.py"]
+
+  - it: should render args when set
+    set:
+      image:
+        name: "myapp"
+        args: ["--verbose", "--config=/etc/config.yaml"]
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].args
+          value: ["--verbose", "--config=/etc/config.yaml"]
+
+  # Resources tests
+  - it: should render resource limits
+    set:
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.limits.cpu
+          value: "500m"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.limits.memory
+          value: "512Mi"
+
+  - it: should render resource requests
+    set:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.cpu
+          value: "100m"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.memory
+          value: "128Mi"
+
+  # Environment variable tests
+  - it: should render simple env vars
+    set:
+      env:
+        MY_VAR: "value"
+        ANOTHER_VAR: "another"
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          count: 2
+
+  - it: should not render env when empty
+    set:
+      env: {}
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+
+  # envFrom tests - simple secrets
+  - it: should render envFrom with simple secret
+    set:
+      extraConfig:
+        secrets:
+          - my-secret
+        configmaps: []
+        envFrom: []
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          count: 1
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: my-secret
+
+  - it: should render envFrom with multiple secrets
+    set:
+      extraConfig:
+        secrets:
+          - secret-one
+          - secret-two
+        configmaps: []
+        envFrom: []
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          count: 2
+
+  # envFrom tests - simple configmaps
+  - it: should render envFrom with simple configmap
+    set:
+      extraConfig:
+        secrets: []
+        configmaps:
+          - my-configmap
+        envFrom: []
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          count: 1
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: my-configmap
+
+  - it: should combine secrets and configmaps
+    set:
+      extraConfig:
+        secrets:
+          - my-secret
+        configmaps:
+          - my-config
+        envFrom: []
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          count: 2
+
+  # envFrom tests - advanced
+  - it: should render advanced envFrom with optional flag
+    set:
+      extraConfig:
+        secrets: []
+        configmaps: []
+        envFrom:
+          - secretRef:
+              name: optional-secret
+              optional: true
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: optional-secret
+              optional: true
+
+  - it: should render advanced envFrom with prefix
+    set:
+      extraConfig:
+        secrets: []
+        configmaps: []
+        envFrom:
+          - configMapRef:
+              name: app-config
+              prefix: APP_
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: app-config
+              prefix: APP_
+
+  - it: should combine simple and advanced envFrom
+    set:
+      extraConfig:
+        secrets:
+          - simple-secret
+        configmaps:
+          - simple-config
+        envFrom:
+          - secretRef:
+              name: advanced-secret
+              optional: true
+    asserts:
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          count: 3
+
+  - it: should not render envFrom when all extraConfig fields are empty
+    set:
+      extraConfig:
+        secrets: []
+        configmaps: []
+        envFrom: []
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          value: null
+
+  # Security context tests
+  - it: should render container security context preset by default
+    asserts:
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext.privileged
+          value: false
+
+  - it: should render custom container security context
+    set:
+      containerSecurityContext:
+        runAsUser: 2000
+        readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true

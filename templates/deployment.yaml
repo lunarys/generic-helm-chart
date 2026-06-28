@@ -215,6 +215,7 @@ spec:
             - name: config-values-mount-via-{{ if .Values.config.mount.subPath }}sub{{ end }}path
               mountPath: {{ if .Values.config.mount.path }}{{ .Values.config.mount.path }}{{ else }}{{ .Values.config.mount.subPath }}{{ end }}
               {{- if .Values.config.mount.subPath }}
+              {{- if gt (len (keys .Values.config.values)) 1 }}{{- fail "config.mount.subPath supports only a single key in config.values; use config.mount.path to mount multiple files" }}{{- end }}
               subPath: {{ .Values.config.values | keys | mustFirst }}
               {{- end }}
               readOnly: true

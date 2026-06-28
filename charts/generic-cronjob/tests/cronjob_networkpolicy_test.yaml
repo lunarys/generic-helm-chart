@@ -1,0 +1,22 @@
+suite: Test CronJob NetworkPolicy selector/name injection
+
+# Renders the networkpolicy subchart's preset policy with the generic-cronjob
+# values, asserting the injected (context-independent) selector and name.
+templates:
+  - charts/networkpolicy/templates/networkpolicy-preset.yaml
+
+tests:
+  - it: should select the CronJob pods via the injected component selector
+    asserts:
+      - equal:
+          path: spec.endpointSelector.matchLabels["app.kubernetes.io/component"]
+          value: cronjob
+      - equal:
+          path: spec.endpointSelector.matchLabels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+
+  - it: should give the policy a distinct, release-scoped name (no collision with a parent policy)
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-cronjob-preset-cnp
