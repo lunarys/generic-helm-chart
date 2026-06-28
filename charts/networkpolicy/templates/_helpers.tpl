@@ -9,18 +9,19 @@ Call with the networkpolicy values subtree as the context, e.g.:
 so it is independent of where the block is nested in the parent's values.
 */}}
 {{- define "networkpolicy.workloadLabels" -}}
-{{- if and .enabled .preset.enabled -}}
-  {{- range $fromNetworkLabel := .preset.ingress.fromNetworkLabels -}}
-    {{- nindent 0 "" }}{{ include "networkpolicy.workloadLabels.label" $fromNetworkLabel }}: {{ $.defaults.fromNetworkLabelValue }}
+{{- $np := . -}}
+{{- if and $np.enabled $np.preset.enabled -}}
+  {{- range $label := $np.preset.ingress.fromNetworkLabels -}}
+    {{- nindent 0 "" }}{{ include "networkpolicy.workloadLabels.label" $label }}: {{ $np.defaults.fromNetworkLabelValue }}
   {{- end }}
-  {{- range $toNetworkLabel := .preset.egress.toNetworkLabels -}}
-    {{- nindent 0 "" }}{{ include "networkpolicy.workloadLabels.label" $toNetworkLabel }}: {{ $.defaults.toNetworkLabelValue }}
+  {{- range $label := $np.preset.egress.toNetworkLabels -}}
+    {{- nindent 0 "" }}{{ include "networkpolicy.workloadLabels.label" $label }}: {{ $np.defaults.toNetworkLabelValue }}
   {{- end }}
-  {{- if .preset.ingress.fromExternalIngressController -}}
-    {{- nindent 0 "" }}{{ .defaults.customExternalIngressNetworkLabel }}: {{ .defaults.fromNetworkLabelValue }}
+  {{- if $np.preset.ingress.fromExternalIngressController -}}
+    {{- nindent 0 "" }}{{ $np.defaults.customExternalIngressNetworkLabel }}: {{ $np.defaults.fromNetworkLabelValue }}
   {{- end }}
-  {{- if .preset.egress.toDefaultPostgresDb -}}
-    {{- nindent 0 "" }}{{ .defaults.defaultPostgresDbNetworkLabel }}: {{ .defaults.toNetworkLabelValue }}
+  {{- if $np.preset.egress.toDefaultPostgresDb -}}
+    {{- nindent 0 "" }}{{ $np.defaults.defaultPostgresDbNetworkLabel }}: {{ $np.defaults.toNetworkLabelValue }}
   {{- end }}
 {{- end }}
 {{- end }}
