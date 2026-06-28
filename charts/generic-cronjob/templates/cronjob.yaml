@@ -71,6 +71,9 @@ spec:
             {{- toYaml .Values.podSecurityContextPreset | nindent 12 }}
           {{- end }}
           restartPolicy: {{ .Values.restartPolicy }}
+          {{- with .Values.serviceAccount.name }}
+          serviceAccountName: {{ . | quote }}
+          {{- end }}
           {{- if .Values.initContainers }}
           initContainers:
             {{- toYaml .Values.initContainers | nindent 12 }}

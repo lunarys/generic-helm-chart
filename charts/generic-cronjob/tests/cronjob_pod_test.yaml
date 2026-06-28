@@ -4,6 +4,13 @@ templates:
   - cronjob.yaml
 
 tests:
+  # Pod label tests
+  - it: should label the pod with the cronjob component so the NetworkPolicy selects it
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: cronjob
+
   # Annotations tests
   - it: should render CronJob annotations separately from pod annotations
     set:
@@ -202,6 +209,24 @@ tests:
     asserts:
       - notExists:
           path: spec.jobTemplate.spec.template.spec.initContainers
+
+  # Service account tests
+  - it: should render serviceAccountName when serviceAccount.name is set
+    set:
+      serviceAccount:
+        name: my-service-account
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.serviceAccountName
+          value: "my-service-account"
+
+  - it: should not render serviceAccountName when serviceAccount.name is empty
+    set:
+      serviceAccount:
+        name: ""
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.serviceAccountName
 
   # Sidecar containers tests
   - it: should render sidecar containers

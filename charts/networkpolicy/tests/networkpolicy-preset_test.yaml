@@ -34,6 +34,18 @@ tests:
           path: metadata.name
           value: RELEASE-NAME-preset-cnp
 
+  # Explicit preset.name must short-circuit nameTemplate: the bogus template
+  # below would error if it were ever invoked, proving the precedence/skip.
+  - it: should let explicit preset.name take precedence over nameTemplate
+    set:
+      preset:
+        name: my-policy
+        nameTemplate: this-template-does-not-exist
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-policy
+
   - it: should set endpointSelector from values
     set:
       preset:
