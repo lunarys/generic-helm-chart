@@ -206,7 +206,7 @@ tests:
                 - key: config.yaml
                   path: config.yaml
 
-  - it: should use first key for subPath mounting
+  - it: should fail when subPath is set with multiple config values (single-key only)
     template: cronjob.yaml
     set:
       config:
@@ -217,13 +217,8 @@ tests:
           first-key.yaml: "content"
           second-key.yaml: "content2"
     asserts:
-      - contains:
-          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
-          content:
-            name: config-values-mount-via-subpath
-            mountPath: /etc/app/config.yaml
-            subPath: first-key.yaml
-            readOnly: true
+      - failedTemplate:
+          errorMessage: "config.mount.subPath supports only a single key in config.values; use config.mount.path to mount multiple files"
 
   # No mount tests
   - it: should not create volumeMounts when config mount is not specified
