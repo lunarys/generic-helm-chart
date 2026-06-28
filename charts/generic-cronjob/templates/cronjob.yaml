@@ -43,6 +43,7 @@ spec:
         metadata:
           labels:
             {{- include "generic-cronjob.labels" . | nindent 12 }}
+            {{- include "networkpolicy.workloadLabels" .Values.networkpolicy | nindent 12 }}
           {{- with .Values.podAnnotations }}
           annotations:
             {{- toYaml . | nindent 12 }}

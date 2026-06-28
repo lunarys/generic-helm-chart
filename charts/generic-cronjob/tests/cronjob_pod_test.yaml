@@ -11,6 +11,22 @@ tests:
           path: spec.jobTemplate.spec.template.metadata.labels["app.kubernetes.io/component"]
           value: cronjob
 
+  - it: should stamp custom network labels on the pod so peers' policies permit it
+    set:
+      networkpolicy:
+        preset:
+          egress:
+            toDefaultPostgresDb: true
+            toNetworkLabels:
+              - custom.network/myapi
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.labels["custom.network/postgresdb"]
+          value: egress
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.labels["custom.network/myapi"]
+          value: egress
+
   # Annotations tests
   - it: should render CronJob annotations separately from pod annotations
     set:
