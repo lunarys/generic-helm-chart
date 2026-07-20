@@ -33,3 +33,19 @@ so it is independent of where the block is nested in the parent's values.
 {{ .label }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Render the local-subnet CIDR list as YAML list items. `defaults.localSubnetCidr`
+may be a single string (legacy) or a list of strings — on a dual-stack LAN it
+carries both the IPv4 range and the IPv6 ULA prefix so `fromLocalSubnet` /
+`toLocalSubnet` admit clients of either family. Call with the whole chart
+context; the caller supplies indentation.
+*/}}
+{{- define "networkpolicy.localSubnetCidrs" -}}
+{{- $cidrs := .Values.defaults.localSubnetCidr -}}
+{{- if kindIs "string" $cidrs -}}
+- {{ $cidrs }}
+{{- else -}}
+{{ toYaml $cidrs }}
+{{- end -}}
+{{- end }}

@@ -71,7 +71,7 @@ spec:
     {{- end }}
     {{- if .Values.preset.ingress.fromLocalSubnet }}
     - fromCIDR:
-        - {{ .Values.defaults.localSubnetCidr }}
+{{ include "networkpolicy.localSubnetCidrs" . | indent 8 }}
     {{- end }}
     {{- if .Values.preset.ingress.fromIngressController }}
     - fromEndpoints:
@@ -147,7 +147,7 @@ spec:
     {{- end }}
     {{- if .Values.preset.egress.toLocalSubnet }}
     - toCIDR:
-        - {{ .Values.defaults.localSubnetCidr }}
+{{ include "networkpolicy.localSubnetCidrs" . | indent 8 }}
     {{- end }}
     {{- if .Values.preset.egress.toKubeApi }}
     - toEntities:

@@ -221,6 +221,40 @@ tests:
             toCIDR:
               - 192.168.0.0/16
 
+  - it: should render all CIDRs when fromLocalSubnet gets a dual-stack list
+    set:
+      preset:
+        ingress:
+          fromLocalSubnet: true
+      defaults:
+        localSubnetCidr:
+          - 10.0.0.0/20
+          - fda0:f54f:5876::/48
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromCIDR:
+              - 10.0.0.0/20
+              - fda0:f54f:5876::/48
+
+  - it: should render all CIDRs when toLocalSubnet gets a dual-stack list
+    set:
+      preset:
+        egress:
+          toLocalSubnet: true
+      defaults:
+        localSubnetCidr:
+          - 10.0.0.0/20
+          - fda0:f54f:5876::/48
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 10.0.0.0/20
+              - fda0:f54f:5876::/48
+
   - it: should render toKubeApi egress rule
     set:
       preset:

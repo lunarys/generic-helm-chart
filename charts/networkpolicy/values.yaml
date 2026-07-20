@@ -8,8 +8,14 @@ enabled: true
 name: ""
 
 defaults:
-  # -- Default CIDR for local subnet isolation
-  localSubnetCidr: 10.0.0.0/20
+  # -- Default CIDR(s) for local subnet isolation. Accepts a single string or a
+  # list. On a dual-stack LAN, list both the IPv4 range and the IPv6 ULA prefix
+  # so `fromLocalSubnet`/`toLocalSubnet` admit clients of either family. The GUA
+  # prefix is intentionally omitted (ISP-delegated, rotates on reconnect) — rely
+  # on the stable ULA.
+  localSubnetCidr:
+    - 10.0.0.0/20
+    - fda0:f54f:5876::/48
   # -- Ingress controller namespace to allow traffic from
   ingressControllerNamespace: traefik
   # -- Include host and remote-nodes, when ingress from kube API is allowed.
