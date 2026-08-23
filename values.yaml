@@ -525,6 +525,8 @@ extraConfig:
 serviceAccount:
   # -- Set a service account name to use an existing service account. The service account must already exist in the namespace.
   name: ""
+  # -- Mount the Kubernetes API token into the pod. Only enable this if the application talks to the Kubernetes API.
+  automountToken: false
 
 # -- Postgres database configuration using the [postgresdb-user-operator](https://github.com/lunarys/postgresdb-user-operator).
 # @default -- see below

@@ -75,6 +75,7 @@ spec:
           {{- with .Values.serviceAccount.name }}
           serviceAccountName: {{ . | quote }}
           {{- end }}
+          automountServiceAccountToken: {{ .Values.serviceAccount.automountToken | default false }}
           {{- if .Values.initContainers }}
           initContainers:
             {{- toYaml .Values.initContainers | nindent 12 }}

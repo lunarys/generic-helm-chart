@@ -84,6 +84,8 @@ Both templates render **in the networkpolicy chart's context**, so a consumer's 
 
 By default, pods run with `runAsNonRoot: true`, UID 1000, GID 3000, fsGroup 2000, and `seccompProfile: RuntimeDefault`. Containers drop all capabilities with `allowPrivilegeEscalation: false`. These presets can be replaced by setting `podSecurityContext` / `containerSecurityContext` directly.
 
+Pods also render `automountServiceAccountToken: false` explicitly (both `generic-service` and `generic-cronjob`) so no API credential is mounted into workloads that never talk to the Kubernetes API. Set `serviceAccount.automountToken: true` to opt in. The field is always rendered — a pod-level value overrides whatever the ServiceAccount object says — and falls back to `false` if the value is nulled out, since an unset field means "mount it".
+
 ### Ingress
 
 Two ingresses can coexist: an internal one (with Traefik allowlist middleware) and an external one (`ingress.external.enabled: true`). TLS ClusterIssuer falls back: `ingress.tls.clusterIssuer` → `global.baseSettings.tls.internalClusterIssuer` → `global.baseSettings.tls.clusterIssuer`.

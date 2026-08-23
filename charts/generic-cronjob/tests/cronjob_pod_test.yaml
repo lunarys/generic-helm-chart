@@ -244,6 +244,40 @@ tests:
       - notExists:
           path: spec.jobTemplate.spec.template.spec.serviceAccountName
 
+  - it: should keep the API token out of the pod by default
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: should keep the API token out of the pod even when a service account is named
+    set:
+      serviceAccount:
+        name: my-service-account
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: should mount the API token when the job opts in
+    set:
+      serviceAccount:
+        name: my-service-account
+        automountToken: true
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.automountServiceAccountToken
+          value: true
+
+  - it: should keep the API token out of the pod when automountToken is nulled out
+    set:
+      serviceAccount:
+        automountToken: null
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.automountServiceAccountToken
+          value: false
+
   # Sidecar containers tests
   - it: should render sidecar containers
     set:

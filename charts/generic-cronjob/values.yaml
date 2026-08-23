@@ -169,6 +169,8 @@ extraConfig:
 # -- Service account to use for the CronJob pod. Leave empty to use the default.
 serviceAccount:
   name: ""
+  # -- Mount the Kubernetes API token into the pod. Only enable this if the job talks to the Kubernetes API.
+  automountToken: false
 
 # -- ExternalSecrets integration (separate from parent chart)
 externalsecrets:
