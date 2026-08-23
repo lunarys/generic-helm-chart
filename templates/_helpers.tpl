@@ -362,17 +362,6 @@ Pod labels
 
 
 {{/*
-Create the name of the service account to use
-*/}}
-{{- define "ju-common.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "ju-common.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/*
 Check for production mode
 */}}
 {{- define "ju-common.isProduction" -}}
