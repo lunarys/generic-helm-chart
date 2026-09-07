@@ -4,12 +4,26 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: {{ .name }}
+  {{- with .values.namespace }}
+  namespace: {{ . }}
+  {{- end }}
 spec:
   target:
     name: {{ coalesce .values.targetName .name }}
     deletionPolicy: {{ .values.deletionPolicy }}
     template:
       type: {{ .values.secretType }}
+      {{- if or .values.labels .values.annotations }}
+      metadata:
+        {{- with .values.labels }}
+        labels:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .values.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- end }}
       data:
 {{- range $key, $val := .values.fields }}
 {{- if or (kindIs "string" $val) ((hasKey $val "enabled") | ternary $val.enabled true) }}

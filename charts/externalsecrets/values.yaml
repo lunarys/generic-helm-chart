@@ -9,6 +9,23 @@ name: ""
 # @default -- `.Values.name`
 targetName: ""
 
+# -- Namespace to create the ExternalSecret in.
+# An ExternalSecret only ever creates its Secret in its own namespace, so this is
+# also where the generated Secret lands -- use it for a secret a consumer expects
+# somewhere other than the release namespace.
+# @default -- the release namespace
+namespace: ""
+
+# -- Labels for the GENERATED Secret, not for the ExternalSecret.
+# Some consumers select secrets by label rather than by name, e.g.
+# `kargo.akuity.io/cred-type: git`.
+# Inherited by every entry under `secrets:`, which can override a key but
+# cannot remove one -- an empty map there still inherits.
+labels: {}
+
+# -- Annotations for the GENERATED Secret, not for the ExternalSecret.
+annotations: {}
+
 # -- What happens to the Secret when the ExternalSecret is deleted (Delete or Retain)
 deletionPolicy: Delete
 
@@ -54,4 +71,7 @@ secrets:
     enabled: false
     name: ""
     targetName: ""
+    namespace: ""
+    labels: {}
+    annotations: {}
     fields: {}
